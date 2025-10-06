@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TCC – Irrigação (1 vaso)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+    --bg: #0f172a;
+    --card: #111827;
+    --muted: #94a3b8;
+    --text: #e5e7eb;
+    --primary: #60a5fa;
+    --accent: #22c55e;
+    --danger: #ef4444;
+    --ring: #1f2937;
+    --border: #1f2937;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+    margin:0; padding:32px;
+    font-family: "Inter", system-ui, -apple-system, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #1f2937 0%, rgba(31,41,55,0) 60%),
+    radial-gradient(900px 600px at 110% 10%, #0b3b1f 0%, rgba(11,59,31,0) 55%),
+    var(--bg);
+    color:var(--text);
+    }
+    .container{ max-width:1100px; margin:0 auto; }
+    header{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin-bottom:24px;
+    }
+    .title{ font-size:24px; font-weight:700; letter-spacing:.2px; }
+    .subtitle{ color:var(--muted); font-size:14px; }
+    .grid{
+    display:grid; grid-template-columns: repeat(12, 1fr); gap:16px;
+    }
+    .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border:1px solid var(--border);
+    border-radius:14px; padding:18px; backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .card h2{ margin:0 0 10px; font-size:16px; letter-spacing:.3px; }
+    .col-6{ grid-column:span 6; }
+    .col-12{ grid-column:span 12; }
+    @media (max-width: 900px){
+    .col-6{ grid-column:span 12; }
+    }
+    .row{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+    .muted{ color:var(--muted); }
+    .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px; font-size:12px; font-weight:600;
+    border:1px solid var(--ring);
+    background:#0b1220;
+    }
+    .badge.ok{ color:#34d399; border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.08); }
+    .badge.warn{ color:#fbbf24; border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.08); }
+    .badge.danger{ color:#ef4444; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+    .btn{
+    padding:10px 14px; border-radius:10px; border:1px solid var(--ring); cursor:pointer;
+    background:#0b1220; color:var(--text); font-weight:600;
+    transition: transform .05s ease, border-color .2s ease, background .2s ease;
+    }
+    .btn:hover{ border-color:#334155; }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: linear-gradient(180deg, rgba(96,165,250,.25), rgba(96,165,250,.15));
+    border-color: rgba(96,165,250,.45); }
+    .btn.success{ background: linear-gradient(180deg, rgba(34,197,94,.25), rgba(34,197,94,.15));
+    border-color: rgba(34,197,94,.45); }
+    .btn.danger{ background: linear-gradient(180deg, rgba(239,68,68,.25), rgba(239,68,68,.15));
+    border-color: rgba(239,68,68,.45); }
+    .btn.small{ padding:6px 10px; font-size:12px; }
+    .inputs{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    @media (max-width: 720px){ .inputs{ grid-template-columns:1fr; } }
+    label{ font-size:12px; color:var(--muted); margin-bottom:4px; display:block; }
+    input, select{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--ring); outline:none;
+    background:#0b1220; color:var(--text); font-weight:600;
+    }
+    select{ cursor:pointer; }
+    .helper{ font-size:12px; color:var(--muted); margin-top:6px; }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ text-align:left; padding:8px 10px; font-size:13px; border-bottom:1px dashed #1f2937; color:#cbd5e1; }
+    th{ color:#94a3b8; font-weight:600; }
+    .kpi{
+    display:flex; gap:18px; align-items:center;
+    }
+    .gauge{
+    width:180px; height:180px; border-radius:50%;
+    display:grid; place-items:center;
+    background: conic-gradient(var(--accent) 0%, #243244 0%);
+    position:relative;
+    }
+    .gauge::after{
+    content:"";
+    position:absolute; inset:14px; border-radius:50%;
+    background: radial-gradient(600px 300px at -30% -30%, rgba(255,255,255,.06), rgba(255,255,255,0) 45%),
+    #0b1220;
+    border:1px solid var(--ring);
+    }
+    .gauge .value{
+    position:relative; font-size:28px; font-weight:800; letter-spacing:.5px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.6);
+    }
+    .legend{
+    display:grid; gap:6px; font-size:13px;
+    }
+    canvas{ width:100% !important; max-height: 300px; }
+    .success{ color:#34d399; }
+    .error{ color:#ef4444; }
+    .plant-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px; border-radius:8px; background:#0b1220;
+    border:1px solid var(--ring); margin-bottom:8px;
+    }
+    .plant-info{ flex:1; }
+    .plant-name{ font-weight:600; margin-bottom:4px; }
+    .plant-details{ font-size:12px; color:var(--muted); }
+    .plant-actions{ display:flex; gap:8px; }
+    .modal{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    z-index:1000; align-items:center; justify-content:center;
+    }
+    .modal.active{ display:flex; }
+    .modal-content{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:24px; max-width:600px; width:90%;
+    max-height:90vh; overflow-y:auto;
+    }
+    .modal-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:20px;
+    }
+    .modal-title{ font-size:18px; font-weight:700; }
+    .close-btn{
+    background:none; border:none; color:var(--muted);
+    font-size:24px; cursor:pointer; padding:0; width:30px; height:30px;
+    }
+    .close-btn:hover{ color:var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="title">Irrigação Automatizada – Vaso 1</div>
+        <div class="subtitle">ESP32 + Firebase Realtime Database</div>
+      </div>
+      <div class="badge" id="deviceIdBadge">device: esp32-vaso-01</div>
+    </header>
+
+    <section class="grid">
+      <!-- GERENCIAMENTO DE PLANTAS -->
+      <div class="card col-12">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0;">Tipos de Plantas</h2>
+          <button class="btn primary" id="btnNovaPlanta">+ Nova Planta</button>
+        </div>
+        <div id="plantsList"></div>
+      </div>
+
+      <!-- STATUS -->
+      <div class="card col-6">
+        <h2>Status em tempo real</h2>
+        <div class="kpi">
+          <div class="gauge" id="gauge">
+            <div class="value" id="gaugeValue">--%</div>
+          </div>
+          <div class="legend">
+            <div>Umidade atual do solo</div>
+            <div>Planta atual: <span id="currentPlantLabel" class="badge ok">--</span></div>
+            <div>Faixa alvo: <span id="rangeLabel" class="badge">--</span></div>
+            <div>Estado: <span id="stateBadge" class="badge warn">--</span></div>
+            <div>Bomba (LED): <span id="pumpBadge" class="badge">--</span></div>
+            <div class="muted" id="lastUpdate">Última atualização: --</div>
+            <button class="btn success" id="btnIrrigar">Irrigar agora</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIG -->
+      <div class="card col-6">
+        <h2>Configuração</h2>
+        <div style="margin-bottom:12px;">
+          <label>Selecionar tipo de planta</label>
+          <select id="plantSelect">
+            <option value="">Configuração manual</option>
+          </select>
+        </div>
+        <div class="inputs">
+          <div>
+            <label>Moisture low (%)</label>
+            <input id="low" type="number" value="35">
+          </div>
+          <div>
+            <label>Moisture high (%)</label>
+            <input id="high" type="number" value="45">
+          </div>
+          <div>
+            <label>tMaxIrrSec (s)</label>
+            <input id="tmax" type="number" value="30">
+          </div>
+          <div>
+            <label>tMinGapMin (min)</label>
+            <input id="tgap" type="number" value="15">
+          </div>
+          <div>
+            <label>rawDry</label>
+            <input id="rawDry" type="number" value="3100">
+          </div>
+          <div>
+            <label>rawWet</label>
+            <input id="rawWet" type="number" value="1400">
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px; justify-content:space-between;">
+          <div class="helper" id="cfgMsg"></div>
+          <button class="btn primary" id="btnSalvar">Salvar configuração</button>
+        </div>
+      </div>
+
+      <!-- GRÁFICO -->
+      <div class="card col-12">
+        <h2>Histórico recente</h2>
+        <canvas id="telemetryChart"></canvas>
+      </div>
+
+      <!-- TABELA -->
+      <div class="card col-12">
+        <h2>Eventos</h2>
+        <table>
+          <thead><tr><th>Horário</th><th>Umidade (%)</th><th>Bomba</th></tr></thead>
+          <tbody id="telemetryBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Nova/Editar Planta -->
+  <div class="modal" id="plantModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Nova Planta</div>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      <div class="inputs">
+        <div style="grid-column:span 2;">
+          <label>Nome da Planta *</label>
+          <input id="plantName" type="text" placeholder="Ex: Tomate, Alface, Manjericão...">
+        </div>
+        <div>
+          <label>Moisture low (%) *</label>
+          <input id="plantLow" type="number" value="35">
+        </div>
+        <div>
+          <label>Moisture high (%) *</label>
+          <input id="plantHigh" type="number" value="45">
+        </div>
+        <div>
+          <label>tMaxIrrSec (s) *</label>
+          <input id="plantTmax" type="number" value="30">
+        </div>
+        <div>
+          <label>tMinGapMin (min) *</label>
+          <input id="plantTgap" type="number" value="15">
+        </div>
+        <div>
+          <label>rawDry *</label>
+          <input id="plantRawDry" type="number" value="3100">
+        </div>
+        <div>
+          <label>rawWet *</label>
+          <input id="plantRawWet" type="number" value="1400">
+        </div>
+      </div>
+      <div class="helper" id="plantMsg" style="margin-top:12px;"></div>
+      <div class="row" style="margin-top:16px; justify-content:flex-end;">
+        <button class="btn" id="btnCancelar">Cancelar</button>
+        <button class="btn primary" id="btnSalvarPlanta">Salvar Planta</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
