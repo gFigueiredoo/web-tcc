@@ -1,0 +1,30 @@
+{
+  "devices": {
+    "esp32-vaso-01": {
+      "config": {
+        "moistureLowPct": 35,
+        "moistureHighPct": 45,
+        "tMaxIrrSec": 30,
+        "tMinGapMin": 15,
+        "rawDry": 3100,
+        "rawWet": 1400,
+        "plantName": null,
+        "updatedAt": 0
+      },
+      "commands": {
+        "irrigateNow": false
+      },
+      "snapshot": {
+        "soilMoisture": 0,
+        "pumpState": false,
+        "state": "IDLE"
+      },
+      "status": {
+        "bootTsMs": 0,
+        "heartbeatTsMs": 0
+      },
+      "telemetry": {}
+    }
+  },
+  "plantTypes": {}
+}
