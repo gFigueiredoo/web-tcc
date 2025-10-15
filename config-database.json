@@ -8,6 +8,7 @@
         "tMinGapMin": 15,
         "rawDry": 3100,
         "rawWet": 1400,
+        "sensorReadIntervalMs": 2000,
         "plantName": null,
         "updatedAt": 0
       },

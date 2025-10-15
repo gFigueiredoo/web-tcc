@@ -9,9 +9,10 @@ let chart;
 
 // Referências DOM
 let gaugeValue, gauge, rangeLabel, stateBadge, pumpBadge, lastUpdate, currentPlantLabel;
-let lowInput, highInput, tmaxInput, tgapInput, rawDryInput, rawWetInput, cfgMsg;
+let lowInput, highInput, tmaxInput, tgapInput, rawDryInput, rawWetInput, sensorIntervalInput, cfgMsg;
 let btnSalvar, btnIrrigar, plantSelect, plantsList, btnNovaPlanta;
 let plantModal, closeModal, btnCancelar, btnSalvarPlanta, modalTitle, plantMsg;
+let historyIntervalSelect;
 
 // Inicializar quando o DOM estiver pronto
 function init() {
@@ -30,6 +31,7 @@ function init() {
   tgapInput = document.getElementById('tgap');
   rawDryInput = document.getElementById('rawDry');
   rawWetInput = document.getElementById('rawWet');
+  sensorIntervalInput = document.getElementById('sensorInterval');
   cfgMsg = document.getElementById('cfgMsg');
 
   btnSalvar = document.getElementById('btnSalvar');
@@ -45,6 +47,8 @@ function init() {
   modalTitle = document.getElementById('modalTitle');
   plantMsg = document.getElementById('plantMsg');
 
+  historyIntervalSelect = document.getElementById('historyInterval');
+
   configRef = ref(db, `devices/${DEVICE_ID}/config`);
 
   // Event Listeners
@@ -55,6 +59,7 @@ function init() {
   plantSelect.addEventListener('change', onPlantSelectChange);
   btnSalvar.addEventListener('click', onSaveConfig);
   btnIrrigar.addEventListener('click', onIrrigate);
+  historyIntervalSelect.addEventListener('change', monitorTelemetry);
 
   // Inicializar funcionalidades
   loadPlants();
@@ -136,6 +141,7 @@ function applyPlantConfig(plantId) {
   tgapInput.value = plant.tMinGapMin;
   rawDryInput.value = plant.rawDry;
   rawWetInput.value = plant.rawWet;
+  sensorIntervalInput.value = plant.sensorReadIntervalMs || 2000;
   plantSelect.value = plantId;
   
   saveConfig(plant.name);
@@ -155,6 +161,7 @@ function editPlant(plantId) {
   document.getElementById('plantTgap').value = plant.tMinGapMin;
   document.getElementById('plantRawDry').value = plant.rawDry;
   document.getElementById('plantRawWet').value = plant.rawWet;
+  document.getElementById('sensorInterval').value = plant.sensorReadIntervalMs || 2000;
   
   plantModal.classList.add('active');
 }
@@ -182,6 +189,7 @@ function openNewPlantModal() {
   document.getElementById('plantTgap').value = 15;
   document.getElementById('plantRawDry').value = 3100;
   document.getElementById('plantRawWet').value = 1400;
+  document.getElementById('sensorInterval').value = 2000;
   plantMsg.textContent = '';
   
   plantModal.classList.add('active');
@@ -195,6 +203,7 @@ function savePlant() {
   const tgap = parseInt(document.getElementById('plantTgap').value);
   const rawDry = parseInt(document.getElementById('plantRawDry').value);
   const rawWet = parseInt(document.getElementById('plantRawWet').value);
+  const sensorIntervalMs = parseInt(document.getElementById('sensorInterval').value);
   
   if (!name) {
     plantMsg.textContent = '❌ Nome da planta é obrigatório';
@@ -210,6 +219,7 @@ function savePlant() {
     tMinGapMin: tgap,
     rawDry,
     rawWet,
+    sensorReadIntervalMs: sensorIntervalMs,
     updatedAt: Date.now()
   };
   
@@ -279,6 +289,7 @@ function monitorConfig() {
     tgapInput.value = cfg.tMinGapMin || 15;
     rawDryInput.value = cfg.rawDry || 3100;
     rawWetInput.value = cfg.rawWet || 1400;
+    sensorIntervalInput.value = cfg.sensorReadIntervalMs || 2000;
     
     rangeLabel.textContent = `${cfg.moistureLowPct}% - ${cfg.moistureHighPct}%`;
     
@@ -300,6 +311,7 @@ function saveConfig(plantName = null) {
     tMinGapMin: parseInt(tgapInput.value),
     rawDry: parseInt(rawDryInput.value),
     rawWet: parseInt(rawWetInput.value),
+    sensorReadIntervalMs: parseInt(sensorIntervalInput.value),
     plantName: plantName || null,
     updatedAt: Date.now()
   };
@@ -332,6 +344,12 @@ function onIrrigate() {
 
 // ========== GRÁFICO E TELEMETRIA ==========
 
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  const pad = n => n.toString().padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 function initChart() {
   const ctx = document.getElementById('telemetryChart').getContext('2d');
   chart = new Chart(ctx, {
@@ -360,16 +378,31 @@ function monitorTelemetry() {
   onValue(telemetryRef, (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
-    
-    const entries = Object.values(data).slice(-20);
-    chart.data.labels = entries.map(e => new Date(e.tsMs).toLocaleTimeString());
-    chart.data.datasets[0].data = entries.map(e => e.soilMoisture);
+
+    const now = Date.now();
+    let cutoff = now - 3600000; // padrão 1h
+
+    switch(historyIntervalSelect.value) {
+      case '1h': cutoff = now - 3600000; break;
+      case '3d': cutoff = now - 3*24*3600000; break;
+      case '1w': cutoff = now - 7*24*3600000; break;
+    }
+
+    const filteredEntries = Object.values(data).filter(e => e.tsMs >= cutoff);
+
+    // Ordenar por timestamp crescente para gráfico
+    filteredEntries.sort((a,b) => a.tsMs - b.tsMs);
+
+    chart.data.labels = filteredEntries.map(e => new Date(e.tsMs).toLocaleTimeString());
+    chart.data.datasets[0].data = filteredEntries.map(e => e.soilMoisture);
     chart.update();
-    
+
+    // Mostrar os 10 eventos mais recentes dentro do filtro
     const tbody = document.getElementById('telemetryBody');
-    tbody.innerHTML = entries.reverse().slice(0, 10).map(e => `
+    const recentEntries = filteredEntries.slice(-10).reverse();
+    tbody.innerHTML = recentEntries.map(e => `
       <tr>
-        <td>${new Date(e.tsMs).toLocaleString()}</td>
+        <td>${formatDateTime(e.tsMs)}</td>
         <td>${e.soilMoisture.toFixed(1)}%</td>
         <td>${e.pumpState ? '🟢 LIGADA' : '⚪ DESLIGADA'}</td>
       </tr>

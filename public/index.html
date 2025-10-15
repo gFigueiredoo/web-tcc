@@ -218,6 +218,10 @@
             <label>rawWet</label>
             <input id="rawWet" type="number" value="1400">
           </div>
+          <div>
+            <label>Intervalo de medição (ms)</label>
+            <input id="sensorInterval" type="number" value="2000" min="100" step="100">
+          </div>
         </div>
         <div class="row" style="margin-top:12px; justify-content:space-between;">
           <div class="helper" id="cfgMsg"></div>
@@ -228,6 +232,14 @@
       <!-- GRÁFICO -->
       <div class="card col-12">
         <h2>Histórico recente</h2>
+        <div style="margin-bottom:12px;">
+          <label>Intervalo do histórico</label>
+          <select id="historyInterval">
+            <option value="1h">Última hora</option>
+            <option value="3d">Últimos 3 dias</option>
+            <option value="1w">Última semana</option>
+          </select>
+        </div>
         <canvas id="telemetryChart"></canvas>
       </div>
 

@@ -15,8 +15,8 @@
 // ========================================
 // PINOS E CONSTANTES
 // ========================================
-#define PIN_PUMP_RELAY   4      // ✅ GPIO 4 -> TIP127 -> Relé
-#define PIN_SOIL_SENSOR  34     // ✅ GPIO 34 (ADC1_CH6) -> Sensor de Umidade
+#define PIN_PUMP_RELAY   4      // GPIO 4 -> TIP127 -> Relé
+#define PIN_SOIL_SENSOR  34     // GPIO 34 (ADC1_CH6) -> Sensor de Umidade
 
 // ========================================
 // CALIBRAÇÃO DO SENSOR
@@ -24,10 +24,9 @@
 #define SENSOR_DRY   3100  // Valor ADC quando solo está SECO
 #define SENSOR_WET   1400  // Valor ADC quando solo está MOLHADO
 
-// Intervalos de tempo
+// Intervalos de tempo padrão
 const unsigned long HEARTBEAT_INTERVAL_MS = 60000;  // 60s
 const unsigned long TELEMETRY_INTERVAL_MS = 10000;  // 10s
-const unsigned long SENSOR_READ_INTERVAL_MS = 500;  // 500ms
 const unsigned long BOOT_STABILIZATION_MS = 10000;  // 10s de estabilização
 
 // ========================================
@@ -50,6 +49,9 @@ unsigned long lastSensorRead = 0;
 bool pumpState = false;
 float currentMoisture = 40.0;
 bool firebaseInitialized = false;
+
+// Variável para intervalo de leitura do sensor (dinâmico)
+unsigned long sensorReadIntervalMs = 2000;  // valor padrão 2 segundos
 
 // Estados da máquina de controle
 enum SystemState {
@@ -86,14 +88,14 @@ bool isFirebaseReady() {
   return Firebase.ready();
 }
 
-// ✅ Controle do relé com TIP127 (PNP - lógica invertida)
+// Controle do relé com TIP127 (PNP - lógica invertida)
 void setPump(bool on) {
   pumpState = on;
-  digitalWrite(PIN_PUMP_RELAY, on ? LOW : HIGH);  // ✅ Invertido para PNP!
+  digitalWrite(PIN_PUMP_RELAY, on ? LOW : HIGH);  // Invertido para PNP
   Serial.printf("[PUMP] %s\n", on ? "🟢 LIGADA" : "⚪ DESLIGADA");
 }
 
-// Leitura do sensor de umidade REAL
+// Leitura do sensor de umidade com média móvel simples
 float readSoilMoisture() {
   static int readings[10] = {0};
   static int readIndex = 0;
@@ -176,7 +178,7 @@ void streamCallbackCmd(FirebaseStream data) {
 
     if (v) {
       Serial.println("[CMD] 💧 Executando irrigação manual...");
-      
+
       setPump(true);
       delay(3000);
       setPump(false);
@@ -194,8 +196,8 @@ void streamCallbackCmd(FirebaseStream data) {
       evt.set("type", "manual_irrigate");
       evt.set("duration", 3);
       Firebase.RTDB.pushJSON(&fbdo, evtPath.c_str(), &evt);
-      
-      systemState = STATE_IDLE;  // ✅ Remove lockout, volta para IDLE
+
+      systemState = STATE_IDLE;  // Remove lockout, volta para IDLE
       publishSnapshot();
     }
   }
@@ -224,6 +226,12 @@ void streamCallbackConfig(FirebaseStream data) {
     if (json.get(result, "plantName")) currentConfig.plantName = result.stringValue;
     if (json.get(result, "updatedAt")) currentConfig.updatedAt = result.intValue;
 
+    // Novo: ler sensorReadIntervalMs
+    if (json.get(result, "sensorReadIntervalMs")) {
+      sensorReadIntervalMs = result.intValue;
+      Serial.printf("[CONFIG] Intervalo de leitura do sensor atualizado para %lu ms (%.2f segundos)\n", sensorReadIntervalMs, sensorReadIntervalMs / 1000.0);
+    }
+
     Serial.println("[CONFIG] ✅ Configuração atualizada:");
     Serial.printf("         🌱 Planta: %s\n", 
                   currentConfig.plantName.length() > 0 ? currentConfig.plantName.c_str() : "Manual");
@@ -236,7 +244,7 @@ void streamCallbackConfig(FirebaseStream data) {
 void streamTimeoutConfig(bool timeout) {
   if (timeout) {
     Serial.println("[CONFIG] ⚠️ Stream timeout, reconectando...");
-}
+  }
 }
 
 // ========================================
@@ -403,8 +411,8 @@ void setup() {
   Serial.println("\n╔════════════════════════════════════════════╗");
   Serial.println("║   ESP32 - Sistema de Irrigação IoT        ║");
   Serial.println("║   Device ID: esp32-vaso-01                 ║");
-  Serial.println("║   Versão: 4.0 - Sem lockout para teste     ║");
-  Serial.println("║   🌱 Sensor: GPIO34 (500ms)                ║");
+  Serial.println("║   Versão: 4.0 - Intervalo leitura dinâmico║");
+  Serial.println("║   🌱 Sensor: GPIO34 (configurável)         ║");
   Serial.println("║   💧 Relé: GPIO4 + TIP127 (PNP)            ║");
   Serial.println("╚════════════════════════════════════════════╝\n");
 
@@ -429,23 +437,17 @@ void setup() {
 // ========================================
 void loop() {
   unsigned long now = millis();
-  static SystemState lastPublishedState = STATE_IDLE;
-  static bool lastPumpState = false;
 
   if (firebaseInitialized && isFirebaseReady()) {
     initializeStreams();
   }
 
-  if (now - lastSensorRead >= SENSOR_READ_INTERVAL_MS) {
+  if (now - lastSensorRead >= sensorReadIntervalMs) {
     lastSensorRead = now;
     currentMoisture = readSoilMoisture();
     controlLoop();
-  }
 
-  if (systemState != lastPublishedState || pumpState != lastPumpState) {
-    publishSnapshot();
-    lastPublishedState = systemState;
-    lastPumpState = pumpState;
+    Serial.printf("[LOOP] Medição do sensor realizada. Próxima em %lu ms (%.2f segundos)\n", sensorReadIntervalMs, sensorReadIntervalMs / 1000.0);
   }
 
   if (now - lastTelemetry >= TELEMETRY_INTERVAL_MS) {
