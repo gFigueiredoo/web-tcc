@@ -51,6 +51,11 @@ function init() {
 
   configRef = ref(db, `devices/${DEVICE_ID}/config`);
 
+  // Garantir valor padrão para o campo de intervalo do sensor
+  if (!sensorIntervalInput.value) {
+    sensorIntervalInput.value = 2000;
+  }
+
   // Event Listeners
   btnNovaPlanta.addEventListener('click', openNewPlantModal);
   closeModal.addEventListener('click', () => plantModal.classList.remove('active'));
@@ -161,7 +166,7 @@ function editPlant(plantId) {
   document.getElementById('plantTgap').value = plant.tMinGapMin;
   document.getElementById('plantRawDry').value = plant.rawDry;
   document.getElementById('plantRawWet').value = plant.rawWet;
-  document.getElementById('sensorInterval').value = plant.sensorReadIntervalMs || 2000;
+  document.getElementById('plantSensorInterval').value = plant.sensorReadIntervalMs || 2000;
   
   plantModal.classList.add('active');
 }
@@ -189,7 +194,7 @@ function openNewPlantModal() {
   document.getElementById('plantTgap').value = 15;
   document.getElementById('plantRawDry').value = 3100;
   document.getElementById('plantRawWet').value = 1400;
-  document.getElementById('sensorInterval').value = 2000;
+  document.getElementById('plantSensorInterval').value = 2000;
   plantMsg.textContent = '';
   
   plantModal.classList.add('active');
@@ -203,7 +208,7 @@ function savePlant() {
   const tgap = parseInt(document.getElementById('plantTgap').value);
   const rawDry = parseInt(document.getElementById('plantRawDry').value);
   const rawWet = parseInt(document.getElementById('plantRawWet').value);
-  const sensorIntervalMs = parseInt(document.getElementById('sensorInterval').value);
+  const sensorIntervalMs = parseInt(document.getElementById('plantSensorInterval').value) || 2000;
   
   if (!name) {
     plantMsg.textContent = '❌ Nome da planta é obrigatório';
@@ -222,6 +227,8 @@ function savePlant() {
     sensorReadIntervalMs: sensorIntervalMs,
     updatedAt: Date.now()
   };
+  
+  console.log('Salvando planta:', plantData); // Debug para verificar os dados da planta
   
   let plantRef;
   if (currentEditPlantId) {
@@ -304,6 +311,9 @@ function monitorConfig() {
 }
 
 function saveConfig(plantName = null) {
+  // Garantir que sensorReadIntervalMs sempre tenha um valor válido
+  const sensorIntervalValue = parseInt(sensorIntervalInput.value) || 2000;
+  
   const config = {
     moistureLowPct: parseInt(lowInput.value),
     moistureHighPct: parseInt(highInput.value),
@@ -311,10 +321,12 @@ function saveConfig(plantName = null) {
     tMinGapMin: parseInt(tgapInput.value),
     rawDry: parseInt(rawDryInput.value),
     rawWet: parseInt(rawWetInput.value),
-    sensorReadIntervalMs: parseInt(sensorIntervalInput.value),
+    sensorReadIntervalMs: sensorIntervalValue,
     plantName: plantName || null,
     updatedAt: Date.now()
   };
+  
+  console.log('Salvando configuração:', config); // Debug para verificar se o campo está sendo enviado
   
   set(configRef, config)
     .then(() => {
