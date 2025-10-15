@@ -21,13 +21,13 @@
 // ========================================
 // CALIBRAÇÃO DO SENSOR
 // ========================================
-#define SENSOR_DRY   3100  // Valor ADC quando solo está SECO (ar)
-#define SENSOR_WET   1400  // Valor ADC quando solo está MOLHADO (água)
+#define SENSOR_DRY   3100  // Valor ADC quando solo está SECO
+#define SENSOR_WET   1400  // Valor ADC quando solo está MOLHADO
 
 // Intervalos de tempo
 const unsigned long HEARTBEAT_INTERVAL_MS = 60000;  // 60s
 const unsigned long TELEMETRY_INTERVAL_MS = 10000;  // 10s
-const unsigned long SENSOR_READ_INTERVAL_MS = 2000; // 2s
+const unsigned long SENSOR_READ_INTERVAL_MS = 500;  // 500ms
 const unsigned long BOOT_STABILIZATION_MS = 10000;  // 10s de estabilização
 
 // ========================================
@@ -46,8 +46,6 @@ unsigned long bootAt = 0;
 unsigned long lastHeartbeat = 0;
 unsigned long lastTelemetry = 0;
 unsigned long lastSensorRead = 0;
-unsigned long lastIrrigationStart = 0;
-unsigned long irrigationStartTime = 0;
 
 bool pumpState = false;
 float currentMoisture = 40.0;
@@ -56,8 +54,7 @@ bool firebaseInitialized = false;
 // Estados da máquina de controle
 enum SystemState {
   STATE_IDLE,
-  STATE_IRRIGATING,
-  STATE_LOCKOUT
+  STATE_IRRIGATING
 };
 SystemState systemState = STATE_IDLE;
 
@@ -68,7 +65,6 @@ struct Config {
   int moistureLowPct = 35;
   int moistureHighPct = 45;
   int tMaxIrrSec = 30;
-  int tMinGapMin = 15;
   int rawDry = SENSOR_DRY;
   int rawWet = SENSOR_WET;
   String plantName = "";
@@ -136,7 +132,6 @@ const char* stateToString(SystemState state) {
   switch (state) {
     case STATE_IDLE: return "IDLE";
     case STATE_IRRIGATING: return "IRRIGATING";
-    case STATE_LOCKOUT: return "LOCKOUT";
     default: return "UNKNOWN";
   }
 }
@@ -200,9 +195,7 @@ void streamCallbackCmd(FirebaseStream data) {
       evt.set("duration", 3);
       Firebase.RTDB.pushJSON(&fbdo, evtPath.c_str(), &evt);
       
-      systemState = STATE_LOCKOUT;
-      lastIrrigationStart = millis();
-      
+      systemState = STATE_IDLE;  // ✅ Remove lockout, volta para IDLE
       publishSnapshot();
     }
   }
@@ -226,7 +219,6 @@ void streamCallbackConfig(FirebaseStream data) {
     if (json.get(result, "moistureLowPct")) currentConfig.moistureLowPct = result.intValue;
     if (json.get(result, "moistureHighPct")) currentConfig.moistureHighPct = result.intValue;
     if (json.get(result, "tMaxIrrSec")) currentConfig.tMaxIrrSec = result.intValue;
-    if (json.get(result, "tMinGapMin")) currentConfig.tMinGapMin = result.intValue;
     if (json.get(result, "rawDry")) currentConfig.rawDry = result.intValue;
     if (json.get(result, "rawWet")) currentConfig.rawWet = result.intValue;
     if (json.get(result, "plantName")) currentConfig.plantName = result.stringValue;
@@ -238,16 +230,13 @@ void streamCallbackConfig(FirebaseStream data) {
     Serial.printf("         💧 Faixa umidade: %d%% - %d%%\n", 
                   currentConfig.moistureLowPct, currentConfig.moistureHighPct);
     Serial.printf("         ⏱️  Tempo máx irrigação: %ds\n", currentConfig.tMaxIrrSec);
-    Serial.printf("         ⏳ Intervalo mínimo: %dmin\n", currentConfig.tMinGapMin);
-    Serial.printf("         📊 Calibração: dry=%d | wet=%d\n", 
-                  currentConfig.rawDry, currentConfig.rawWet);
   }
 }
 
 void streamTimeoutConfig(bool timeout) {
   if (timeout) {
     Serial.println("[CONFIG] ⚠️ Stream timeout, reconectando...");
-  }
+}
 }
 
 // ========================================
@@ -374,72 +363,23 @@ void controlLoop() {
   }
 
   unsigned long now = millis();
-  unsigned long timeSinceLastIrrigation = now - lastIrrigationStart;
-  unsigned long irrigationDuration = now - irrigationStartTime;
   
   switch (systemState) {
-    
     case STATE_IDLE:
       if (currentMoisture < currentConfig.moistureLowPct) {
-        Serial.printf("[CTRL] 💧 Umidade baixa (%.1f%% < %d%%), iniciando irrigação\n",
-                      currentMoisture, currentConfig.moistureLowPct);
+        Serial.printf("[CTRL] 💧 ACIONANDO BOMBA! Umidade baixa (%.1f%% < %d%%)\n", currentMoisture, currentConfig.moistureLowPct);
         systemState = STATE_IRRIGATING;
-        irrigationStartTime = now;
         setPump(true);
-        
-        if (isFirebaseReady()) {
-          String evtPath = "/devices/" + String(DEVICE_ID) + "/events";
-          FirebaseJson evt;
-          evt.set("tsMs", (int)millis());
-          evt.set("type", "auto_irrigate_start");
-          evt.set("moisture", currentMoisture);
-          Firebase.RTDB.pushJSON(&fbdo, evtPath.c_str(), &evt);
-        }
+        publishSnapshot();
       }
       break;
-      
+
     case STATE_IRRIGATING:
       if (currentMoisture >= currentConfig.moistureHighPct) {
-        Serial.printf("[CTRL] ✅ Umidade atingida (%.1f%% >= %d%%), parando irrigação\n",
-                      currentMoisture, currentConfig.moistureHighPct);
+        Serial.printf("[CTRL] ✅ Umidade atingida (%.1f%% >= %d%%), DESLIGANDO BOMBA\n", currentMoisture, currentConfig.moistureHighPct);
         setPump(false);
-        systemState = STATE_LOCKOUT;
-        lastIrrigationStart = now;
-        
-        if (isFirebaseReady()) {
-          String evtPath = "/devices/" + String(DEVICE_ID) + "/events";
-          FirebaseJson evt;
-          evt.set("tsMs", (int)millis());
-          evt.set("type", "auto_irrigate_end");
-          evt.set("reason", "target_reached");
-          evt.set("duration", (int)(irrigationDuration / 1000));
-          Firebase.RTDB.pushJSON(&fbdo, evtPath.c_str(), &evt);
-        }
-      } 
-      else if (irrigationDuration >= (currentConfig.tMaxIrrSec * 1000)) {
-        Serial.printf("[CTRL] ⏱️ Tempo máximo atingido (%ds), parando irrigação\n",
-                      currentConfig.tMaxIrrSec);
-        setPump(false);
-        systemState = STATE_LOCKOUT;
-        lastIrrigationStart = now;
-        
-        if (isFirebaseReady()) {
-          String evtPath = "/devices/" + String(DEVICE_ID) + "/events";
-          FirebaseJson evt;
-          evt.set("tsMs", (int)millis());
-          evt.set("type", "auto_irrigate_end");
-          evt.set("reason", "timeout");
-          evt.set("duration", currentConfig.tMaxIrrSec);
-          Firebase.RTDB.pushJSON(&fbdo, evtPath.c_str(), &evt);
-        }
-      }
-      break;
-      
-    case STATE_LOCKOUT:
-      if (timeSinceLastIrrigation >= (currentConfig.tMinGapMin * 60 * 1000)) {
-        Serial.printf("[CTRL] ⏳ Intervalo mínimo cumprido (%dmin), voltando para IDLE\n",
-                      currentConfig.tMinGapMin);
         systemState = STATE_IDLE;
+        publishSnapshot();
       }
       break;
   }
@@ -456,27 +396,25 @@ void setup() {
 
   pinMode(PIN_PUMP_RELAY, OUTPUT);
   pinMode(PIN_SOIL_SENSOR, INPUT);
-  
-  // ✅ Garante bomba desligada (HIGH com TIP127 PNP)
-  digitalWrite(PIN_PUMP_RELAY, HIGH);
+
+  digitalWrite(PIN_PUMP_RELAY, HIGH);  // Bomba desligada
   pumpState = false;
 
   Serial.println("\n╔════════════════════════════════════════════╗");
   Serial.println("║   ESP32 - Sistema de Irrigação IoT        ║");
   Serial.println("║   Device ID: esp32-vaso-01                 ║");
-  Serial.println("║   Versão: 2.0 - TIP127 (PNP)               ║");
-  Serial.println("║   🌱 Sensor: GPIO34 (ADC1_CH6)             ║");
-  Serial.println("║   💧 Relé: GPIO4 + TIP127                  ║");
+  Serial.println("║   Versão: 4.0 - Sem lockout para teste     ║");
+  Serial.println("║   🌱 Sensor: GPIO34 (500ms)                ║");
+  Serial.println("║   💧 Relé: GPIO4 + TIP127 (PNP)            ║");
   Serial.println("╚════════════════════════════════════════════╝\n");
-  
-  // ✅ TESTE INICIAL DO RELÉ
+
   Serial.println("[TEST] 🔧 Testando relé com TIP127...");
   digitalWrite(PIN_PUMP_RELAY, LOW);  // Liga
   delay(1000);
   digitalWrite(PIN_PUMP_RELAY, HIGH); // Desliga
   Serial.println("[TEST] ✅ Relé OK!\n");
-  
-  Serial.printf("[BOOT] ⏳ Período de estabilização: %d segundos\n", BOOT_STABILIZATION_MS/1000);
+
+  Serial.printf("[BOOT] ⏳ Período de estabilização: %d segundos\n", BOOT_STABILIZATION_MS / 1000);
   Serial.println("[BOOT] 🚫 Controle automático bloqueado durante boot\n");
 
   setupWifi();
@@ -492,6 +430,7 @@ void setup() {
 void loop() {
   unsigned long now = millis();
   static SystemState lastPublishedState = STATE_IDLE;
+  static bool lastPumpState = false;
 
   if (firebaseInitialized && isFirebaseReady()) {
     initializeStreams();
@@ -500,13 +439,13 @@ void loop() {
   if (now - lastSensorRead >= SENSOR_READ_INTERVAL_MS) {
     lastSensorRead = now;
     currentMoisture = readSoilMoisture();
+    controlLoop();
   }
 
-  controlLoop();
-
-  if (systemState != lastPublishedState || pumpState) {
+  if (systemState != lastPublishedState || pumpState != lastPumpState) {
     publishSnapshot();
     lastPublishedState = systemState;
+    lastPumpState = pumpState;
   }
 
   if (now - lastTelemetry >= TELEMETRY_INTERVAL_MS) {
