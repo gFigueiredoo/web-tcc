@@ -1,0 +1,125 @@
+# Ideias / Backlog de Features
+
+## 1. Sensor de Luz / Luminosidade
+- Monitorar exposição solar das plantas
+- Alertas para plantas que precisam de mais/menos luz
+- Gráficos de luminosidade ao longo do dia
+
+## 2. Sensor de Temperatura e Umidade do Ar
+- DHT22 para temperatura/umidade ambiente
+- Correlacionar com irrigação (ex: dias quentes = mais água)
+- Alertas de temperatura extrema
+
+## 3. Sensor de pH do Solo
+- Monitorar acidez/alcalinidade do solo
+- Alertas quando pH está fora da faixa ideal
+- Histórico de pH por planta
+
+## 4. Câmera Time‑lapse
+- ESP32-CAM para fotos periódicas
+- Acompanhar crescimento visual das plantas
+- Detecção de pragas/doenças por IA
+
+### 📱 Interface / UX
+
+## 5. Aplicativo Mobile (PWA)
+- Progressive Web App responsivo
+- Notificações push no celular
+- Modo offline básico
+
+## 6. Dashboard Analytics
+- Estatísticas de consumo de água
+- Previsões de irrigação baseadas em ML
+- Relatórios semanais/mensais
+
+## 7. Sistema de Alertas Inteligentes
+- WhatsApp / Telegram / Email
+- Alertas customizáveis por planta
+- Alertas de manutenção preventiva
+
+### 🤖 Automação Inteligente
+
+## 8. Integração com Previsão do Tempo
+- API meteorológica (OpenWeather)
+- Reduzir irrigação se vai chover
+- Ajustar irrigação pela temperatura prevista
+
+## 9. Machine Learning para Otimização
+- Aprender padrões de crescimento de cada planta
+- Otimizar horários de irrigação
+- Predição de necessidade de água
+
+## 10. Scheduler de Irrigação Avançado
+- Múltiplos horários por dia
+- Baseado em sunrise/sunset
+- Pausar em horários específicos
+
+### 🔧 Hardware / Sistema
+
+## 11. Múltiplos Vasos / Zonas
+- Controlar 4–8 vasos independentes
+- Cada vaso com seu próprio sensor
+- Configuração individual por zona
+
+## 12. Sistema de Fertilização
+- Bomba peristáltica para nutrientes
+- Cronograma de fertilização
+- Mistura automática NPK
+
+## 13. Detecção de Falhas
+- Sensor de nível do reservatório
+- Detecção de bomba queimada
+- Sensor de vazamento de água
+
+### 📊 Dados / Análise
+
+## 14. Exportação de Dados
+- CSV / Excel dos históricos
+- Backup automático (Google Drive)
+- API para integração externa
+
+## 15. Comparação entre Plantas
+- Benchmark de crescimento
+- Análise A/B de configurações
+- Ranking de performance
+
+## 16. Integração IoT
+- MQTT broker
+- Integração Home Assistant
+- Comandos de voz Alexa/Google
+
+### 🌐 Social / Gamificação
+
+## 17. Rede Social de Jardineiros
+- Compartilhar fotos
+- Trocar dicas
+- Competições de crescimento
+
+## 18. Sistema de Conquistas
+- Badges por marcos
+- Pontuação por saúde das plantas
+- Streak de dias sem problemas
+
+### 💰 Comerciais
+
+## 19. Marketplace de Plantas
+- Catálogo de sementes/mudas
+- Configurações pré-definidas por espécie
+- Parceria com lojas
+
+## 20. Consultoria Virtual
+- Chat com especialistas
+- Diagnóstico por foto
+- Planos de cuidado personalizados
+
+### 🔋 Sustentabilidade
+
+## 21. Energia Solar
+- Pequeno painel solar
+- Bateria para backup
+- Monitoramento de consumo
+
+## 22. Reutilização de Água
+- Captação de chuva
+- Reuso de água de ar-condicionado
+- Medição de economia
