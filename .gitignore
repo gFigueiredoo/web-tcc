@@ -1,3 +1,11 @@
 node_modules
 dist
 .env
+.log
+.cache
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
