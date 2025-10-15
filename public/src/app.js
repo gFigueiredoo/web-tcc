@@ -2,6 +2,8 @@ import { db, ref, onValue, set, push, remove } from './firebase.js';
 
 const DEVICE_ID = 'esp32-vaso-01';
 
+
+
 let currentEditPlantId = null;
 let plantsData = {};
 let configRef;
@@ -13,6 +15,10 @@ let lowInput, highInput, tmaxInput, tgapInput, rawDryInput, rawWetInput, sensorI
 let btnSalvar, btnIrrigar, plantSelect, plantsList, btnNovaPlanta;
 let plantModal, closeModal, btnCancelar, btnSalvarPlanta, modalTitle, plantMsg;
 let historyIntervalSelect;
+
+// Novos elementos para interface amigável
+let moistureRange, moistureDisplay, modeBtns, simpleMode, advancedMode;
+let timeBtns, freqBtns;
 
 // Inicializar quando o DOM estiver pronto
 function init() {
@@ -49,6 +55,24 @@ function init() {
 
   historyIntervalSelect = document.getElementById('historyInterval');
 
+  // Novos elementos da interface amigável
+  moistureRange = document.getElementById('moistureRange');
+  moistureDisplay = document.getElementById('moistureDisplay');
+  modeBtns = document.querySelectorAll('.mode-btn');
+  simpleMode = document.getElementById('simpleMode');
+  advancedMode = document.getElementById('advancedMode');
+  timeBtns = document.querySelectorAll('.time-btn');
+  freqBtns = document.querySelectorAll('.freq-btn');
+
+  // Log dos elementos para debug
+  console.log('Elementos encontrados:', {
+    moistureRange: !!moistureRange,
+    moistureDisplay: !!moistureDisplay,
+    modeBtns: modeBtns.length,
+    timeBtns: timeBtns.length,
+    freqBtns: freqBtns.length
+  });
+
   configRef = ref(db, `devices/${DEVICE_ID}/config`);
 
   // Garantir valor padrão para o campo de intervalo do sensor
@@ -66,12 +90,63 @@ function init() {
   btnIrrigar.addEventListener('click', onIrrigate);
   historyIntervalSelect.addEventListener('change', monitorTelemetry);
 
+  // Event Listeners para interface amigável usando delegação
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('mode-btn')) {
+      switchMode(e);
+    }
+    if (e.target.classList.contains('time-btn')) {
+      selectTimeOption(e);
+    }
+    if (e.target.classList.contains('freq-btn')) {
+      selectFrequencyOption(e);
+    }
+  });
+  
+  // Event listener direto para o slider
+  document.addEventListener('input', function(e) {
+    if (e.target.id === 'moistureRange') {
+      updateMoistureDisplay();
+    }
+  });
+
   // Inicializar funcionalidades
   loadPlants();
   monitorSnapshot();
   monitorConfig();
   initChart();
   monitorTelemetry();
+  
+  // Inicializar gauge com valor de demonstração
+  if (gaugeValue && gauge) {
+    gaugeValue.textContent = '42.5%';
+    gauge.style.background = 'conic-gradient(var(--accent) 42.5%, #243244 42.5%)';
+    console.log('🎯 Gauge inicializado com valor de demonstração');
+  }
+  
+  // Inicializar interface amigável
+  setTimeout(() => {
+    // Inicializar slider
+    updateMoistureDisplay();
+    
+    // Certificar que o modo simples está ativo por padrão
+    const simpleMode = document.getElementById('simpleMode');
+    const advancedMode = document.getElementById('advancedMode');
+    
+    if (simpleMode && advancedMode) {
+      simpleMode.style.display = 'block';
+      advancedMode.style.display = 'none';
+    }
+    
+    // Garantir que os botões corretos estejam ativos
+    const defaultTimeBtn = document.querySelector('.time-btn[data-seconds="30"]');
+    const defaultFreqBtn = document.querySelector('.freq-btn[data-ms="2000"]');
+    
+    if (defaultTimeBtn) defaultTimeBtn.classList.add('active');
+    if (defaultFreqBtn) defaultFreqBtn.classList.add('active');
+    
+    console.log('Interface amigável inicializada');
+  }, 200);
 }
 
 // ========== GERENCIAMENTO DE PLANTAS ==========
@@ -80,8 +155,78 @@ function loadPlants() {
   const plantsRef = ref(db, 'plantTypes');
   onValue(plantsRef, (snapshot) => {
     plantsData = snapshot.val() || {};
+    
+    // Adicionar plantas populares se não existirem
+    if (Object.keys(plantsData).length === 0) {
+      createDefaultPlants();
+    }
+    
     renderPlantsList();
     updatePlantSelect();
+  });
+}
+
+function createDefaultPlants() {
+  const defaultPlants = [
+    {
+      name: "🍅 Tomate",
+      low: 30,
+      high: 40,
+      tMaxIrrSec: 45,
+      tMinGapMin: 20,
+      rawDry: 3100,
+      rawWet: 1400,
+      sensorReadIntervalMs: 3000
+    },
+    {
+      name: "🥬 Alface",
+      low: 40,
+      high: 50,
+      tMaxIrrSec: 25,
+      tMinGapMin: 15,
+      rawDry: 3100,
+      rawWet: 1400,
+      sensorReadIntervalMs: 2000
+    },
+    {
+      name: "🌿 Manjericão",
+      low: 35,
+      high: 45,
+      tMaxIrrSec: 30,
+      tMinGapMin: 18,
+      rawDry: 3100,
+      rawWet: 1400,
+      sensorReadIntervalMs: 2000
+    },
+    {
+      name: "🌹 Rosa",
+      low: 25,
+      high: 35,
+      tMaxIrrSec: 40,
+      tMinGapMin: 30,
+      rawDry: 3100,
+      rawWet: 1400,
+      sensorReadIntervalMs: 4000
+    },
+    {
+      name: "🌵 Suculenta",
+      low: 15,
+      high: 25,
+      tMaxIrrSec: 15,
+      tMinGapMin: 60,
+      rawDry: 3100,
+      rawWet: 1400,
+      sensorReadIntervalMs: 10000
+    }
+  ];
+
+  const plantsRef = ref(db, 'plantTypes');
+  defaultPlants.forEach(plant => {
+    const plantRef = push(plantsRef);
+    set(plantRef, {
+      ...plant,
+      updatedAt: Date.now()
+    });
   });
 }
 
@@ -265,23 +410,43 @@ function monitorSnapshot() {
   const snapshotRef = ref(db, `devices/${DEVICE_ID}/snapshot`);
   onValue(snapshotRef, (snapshot) => {
     const data = snapshot.val();
-    if (!data) return;
     
-    const moisture = data.soilMoisture || 0;
-    const pump = data.pumpState || false;
-    const state = data.state || 'IDLE';
+    // Se não há dados, criar dados de demonstração
+    let moisture, pump, state;
+    if (!data) {
+      moisture = 42.5; // Valor de demonstração
+      pump = false;
+      state = 'IDLE';
+      console.log('📊 Usando dados de demonstração para o gauge');
+    } else {
+      moisture = data.soilMoisture || 0;
+      pump = data.pumpState || false;
+      state = data.state || 'IDLE';
+    }
     
-    gaugeValue.textContent = `${moisture.toFixed(1)}%`;
-    const percent = Math.min(100, Math.max(0, moisture));
-    gauge.style.background = `conic-gradient(var(--accent) ${percent}%, #243244 ${percent}%)`;
+    // Atualizar gauge com porcentagem visível
+    if (gaugeValue) {
+      gaugeValue.textContent = `${moisture.toFixed(1)}%`;
+    }
     
-    stateBadge.textContent = state;
-    stateBadge.className = state === 'IDLE' ? 'badge ok' : 'badge warn';
+    if (gauge) {
+      const percent = Math.min(100, Math.max(0, moisture));
+      gauge.style.background = `conic-gradient(var(--accent) ${percent}%, #243244 ${percent}%)`;
+    }
     
-    pumpBadge.textContent = pump ? 'LIGADA' : 'DESLIGADA';
-    pumpBadge.className = pump ? 'badge ok' : 'badge';
+    if (stateBadge) {
+      stateBadge.textContent = state;
+      stateBadge.className = state === 'IDLE' ? 'badge ok' : 'badge warn';
+    }
     
-    lastUpdate.textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+    if (pumpBadge) {
+      pumpBadge.textContent = pump ? 'LIGADA' : 'DESLIGADA';
+      pumpBadge.className = pump ? 'badge ok' : 'badge';
+    }
+    
+    if (lastUpdate) {
+      lastUpdate.textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+    }
   });
 }
 
@@ -297,6 +462,13 @@ function monitorConfig() {
     rawDryInput.value = cfg.rawDry || 3100;
     rawWetInput.value = cfg.rawWet || 1400;
     sensorIntervalInput.value = cfg.sensorReadIntervalMs || 2000;
+    
+    // Sincronizar com interface amigável
+    if (moistureRange) {
+      moistureRange.value = cfg.moistureLowPct || 35;
+      updateMoistureDisplay();
+    }
+    syncAdvancedToSimple();
     
     rangeLabel.textContent = `${cfg.moistureLowPct}% - ${cfg.moistureHighPct}%`;
     
@@ -420,6 +592,134 @@ function monitorTelemetry() {
       </tr>
     `).join('');
   });
+}
+
+// ========== INTERFACE AMIGÁVEL ==========
+
+function switchMode(e) {
+  const mode = e.target.dataset.mode;
+  console.log('Mudando para modo:', mode);
+  
+  // Atualizar botões
+  modeBtns.forEach(btn => btn.classList.remove('active'));
+  e.target.classList.add('active');
+  
+  // Mostrar/esconder seções
+  if (mode === 'simple') {
+    if (simpleMode) simpleMode.style.display = 'block';
+    if (advancedMode) advancedMode.style.display = 'none';
+    syncSimpleToAdvanced();
+    console.log('Modo simples ativado');
+  } else {
+    if (simpleMode) simpleMode.style.display = 'none';
+    if (advancedMode) advancedMode.style.display = 'block';
+    syncAdvancedToSimple();
+    console.log('Modo avançado ativado');
+  }
+}
+
+function updateMoistureDisplay() {
+  const moistureRange = document.getElementById('moistureRange');
+  const moistureDisplay = document.getElementById('moistureDisplay');
+  
+  if (!moistureRange || !moistureDisplay) {
+    console.log('updateMoistureDisplay: elementos não encontrados', {
+      moistureRange: !!moistureRange,
+      moistureDisplay: !!moistureDisplay
+    });
+    return;
+  }
+  
+  const value = moistureRange.value;
+  moistureDisplay.textContent = `${value}%`;
+  
+  // Sincronizar com campo avançado
+  const lowInput = document.getElementById('low');
+  const highInput = document.getElementById('high');
+  
+  if (lowInput) lowInput.value = value;
+  if (highInput) highInput.value = parseInt(value) + 10; // 10% acima para parar
+  
+  console.log('Umidade atualizada para:', value + '%');
+}
+
+function selectTimeOption(e) {
+  const seconds = parseInt(e.target.dataset.seconds);
+  console.log('Tempo de irrigação selecionado:', seconds + 's');
+  
+  // Atualizar botões - buscar novamente para garantir
+  const allTimeBtns = document.querySelectorAll('.time-btn');
+  allTimeBtns.forEach(btn => btn.classList.remove('active'));
+  e.target.classList.add('active');
+  
+  // Sincronizar com campo avançado
+  const tmaxInput = document.getElementById('tmax');
+  if (tmaxInput) {
+    tmaxInput.value = seconds;
+    console.log('Campo avançado atualizado:', tmaxInput.value);
+  }
+}
+
+function selectFrequencyOption(e) {
+  const ms = parseInt(e.target.dataset.ms);
+  console.log('Frequência selecionada:', ms + 'ms');
+  
+  // Atualizar botões - buscar novamente para garantir
+  const allFreqBtns = document.querySelectorAll('.freq-btn');
+  allFreqBtns.forEach(btn => btn.classList.remove('active'));
+  e.target.classList.add('active');
+  
+  // Sincronizar com campo avançado
+  const sensorIntervalInput = document.getElementById('sensorInterval');
+  if (sensorIntervalInput) {
+    sensorIntervalInput.value = ms;
+    console.log('Campo sensor interval atualizado:', sensorIntervalInput.value);
+  }
+}
+
+function syncSimpleToAdvanced() {
+  // Sincronizar valores do modo simples para avançado
+  const moistureValue = parseInt(moistureRange.value);
+  lowInput.value = moistureValue;
+  highInput.value = moistureValue + 10;
+  
+  const activeTimeBtn = document.querySelector('.time-btn.active');
+  if (activeTimeBtn) {
+    tmaxInput.value = activeTimeBtn.dataset.seconds;
+  }
+  
+  const activeFreqBtn = document.querySelector('.freq-btn.active');
+  if (activeFreqBtn) {
+    sensorIntervalInput.value = activeFreqBtn.dataset.ms;
+  }
+}
+
+function syncAdvancedToSimple() {
+  // Sincronizar valores do modo avançado para simples
+  if (moistureRange && lowInput) {
+    moistureRange.value = lowInput.value;
+    updateMoistureDisplay();
+  }
+  
+  // Atualizar botão de tempo ativo
+  if (timeBtns.length > 0 && tmaxInput) {
+    timeBtns.forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.seconds === tmaxInput.value) {
+        btn.classList.add('active');
+      }
+    });
+  }
+  
+  // Atualizar botão de frequência ativo
+  if (freqBtns.length > 0 && sensorIntervalInput) {
+    freqBtns.forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.ms === sensorIntervalInput.value) {
+        btn.classList.add('active');
+      }
+    });
+  }
 }
 
 // Inicializar quando o DOM carregar

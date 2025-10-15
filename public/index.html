@@ -93,7 +93,9 @@
     }
     .gauge{
     width:180px; height:180px; border-radius:50%;
-    display:grid; place-items:center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: conic-gradient(var(--accent) 0%, #243244 0%);
     position:relative;
     }
@@ -105,8 +107,13 @@
     border:1px solid var(--ring);
     }
     .gauge .value{
-    position:relative; font-size:28px; font-weight:800; letter-spacing:.5px;
-    text-shadow: 0 1px 0 rgba(0,0,0,.6);
+    position:relative; font-size:32px; font-weight:900; letter-spacing:.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,.8);
+    color: #fff;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     }
     .legend{
     display:grid; gap:6px; font-size:13px;
@@ -143,6 +150,64 @@
     font-size:24px; cursor:pointer; padding:0; width:30px; height:30px;
     }
     .close-btn:hover{ color:var(--text); }
+    
+    /* Estilos para interface amigável */
+    .mode-switcher{ display:flex; gap:4px; }
+    .mode-btn{
+      padding:6px 12px; border-radius:6px; border:1px solid var(--ring);
+      background:#0b1220; color:var(--muted); font-size:12px; cursor:pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-btn.active, .mode-btn:hover{
+      background:var(--primary); color:#fff; border-color:var(--primary);
+    }
+    .config-item{ margin-bottom:20px; }
+    .config-item label{ font-size:14px; font-weight:600; margin-bottom:8px; display:block; }
+    
+    .slider-container{ margin:8px 0; }
+    .slider{
+      width:100%; height:8px; border-radius:4px; 
+      background: linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%);
+      outline:none; -webkit-appearance:none; appearance:none;
+    }
+    .slider::-webkit-slider-thumb{
+      -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+      background:var(--primary); cursor:pointer; border:2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .slider::-moz-range-thumb{
+      width:20px; height:20px; border-radius:50%;
+      background:var(--primary); cursor:pointer; border:2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .slider-label{ font-size:11px; color:var(--muted); font-weight:600; }
+    .slider-value{ 
+      margin-top:8px; font-size:14px; color:var(--text); font-weight:600;
+      padding:10px 14px; background:var(--primary); border-radius:8px;
+      text-align:center;
+    }
+    
+    .time-options, .frequency-options{
+      display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;
+    }
+    .time-btn, .freq-btn{
+      padding:8px 14px; border-radius:8px; border:1px solid var(--ring);
+      background:#0b1220; color:var(--muted); font-size:12px; cursor:pointer;
+      transition: all 0.2s ease;
+    }
+    .time-btn.active, .freq-btn.active, .time-btn:hover, .freq-btn:hover{
+      background:var(--accent); color:#fff; border-color:var(--accent);
+    }
+    
+    .simple-config .helper{
+      font-size:11px; color:var(--muted); margin-top:4px;
+      display:flex; align-items:center; gap:4px;
+    }
+    
+    @media (max-width: 720px){
+      .mode-switcher{ flex-direction:column; }
+      .time-options, .frequency-options{ flex-direction:column; }
+    }
   </style>
 </head>
 <body>
@@ -186,46 +251,106 @@
 
       <!-- CONFIG -->
       <div class="card col-6">
-        <h2>Configuração</h2>
-        <div style="margin-bottom:12px;">
-          <label>Selecionar tipo de planta</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0;">⚙️ Configuração</h2>
+          <div class="mode-switcher">
+            <button class="mode-btn active" data-mode="simple" onclick="switchConfigMode(this, 'simple')">🌱 Simples</button>
+            <button class="mode-btn" data-mode="advanced" onclick="switchConfigMode(this, 'advanced')">🔧 Avançado</button>
+          </div>
+        </div>
+        
+        <!-- Seleção de Planta -->
+        <div style="margin-bottom:16px;">
+          <label>🌿 Que planta você está cultivando?</label>
           <select id="plantSelect">
-            <option value="">Configuração manual</option>
+            <option value="">Escolha sua planta ou configure manualmente</option>
           </select>
+          <div class="helper">💡 Selecione uma planta para configuração automática</div>
         </div>
-        <div class="inputs">
-          <div>
-            <label>Moisture low (%)</label>
-            <input id="low" type="number" value="35">
-          </div>
-          <div>
-            <label>Moisture high (%)</label>
-            <input id="high" type="number" value="45">
-          </div>
-          <div>
-            <label>tMaxIrrSec (s)</label>
-            <input id="tmax" type="number" value="30">
-          </div>
-          <div>
-            <label>tMinGapMin (min)</label>
-            <input id="tgap" type="number" value="15">
-          </div>
-          <div>
-            <label>rawDry</label>
-            <input id="rawDry" type="number" value="3100">
-          </div>
-          <div>
-            <label>rawWet</label>
-            <input id="rawWet" type="number" value="1400">
-          </div>
-          <div>
-            <label>Intervalo de medição (ms)</label>
-            <input id="sensorInterval" type="number" value="2000" min="100" step="100">
+
+        <!-- MODO SIMPLES -->
+        <div class="config-mode" id="simpleMode">
+          <div class="simple-config">
+            <div class="config-item">
+              <label>💧 Quando regar?</label>
+              <div class="slider-container">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                  <span class="slider-label">Solo seco (20%)</span>
+                  <span class="slider-label">Solo úmido (50%)</span>
+                </div>
+                <input type="range" id="moistureRange" min="20" max="50" value="35" class="slider" oninput="updateSliderDisplay(this.value)">
+                <div class="slider-value">Regar quando umidade estiver abaixo de <strong id="moistureDisplay">35%</strong></div>
+                <div class="helper">💡 Arraste o controle para ajustar quando iniciar a irrigação</div>
+              </div>
+            </div>
+
+            <div class="config-item">
+              <label>⏱️ Por quanto tempo regar?</label>
+              <div class="time-options">
+                <button class="time-btn" data-seconds="15" onclick="selectTime(this, 15)">Rápido (15s)</button>
+                <button class="time-btn active" data-seconds="30" onclick="selectTime(this, 30)">Normal (30s)</button>
+                <button class="time-btn" data-seconds="60" onclick="selectTime(this, 60)">Longo (1min)</button>
+              </div>
+              <div class="helper">💡 Comece com "Normal" e ajuste conforme necessário</div>
+            </div>
+
+            <div class="config-item">
+              <label>🔄 Com que frequência verificar?</label>
+              <div class="frequency-options">
+                <button class="freq-btn" data-ms="1000" onclick="selectFreq(this, 1000)">A cada 1s</button>
+                <button class="freq-btn active" data-ms="2000" onclick="selectFreq(this, 2000)">A cada 2s</button>
+                <button class="freq-btn" data-ms="5000" onclick="selectFreq(this, 5000)">A cada 5s</button>
+                <button class="freq-btn" data-ms="3600000" onclick="selectFreq(this, 3600000)">A cada 1h</button>
+              </div>
+              <div class="helper">💡 Mais frequente = maior precisão, mas gasta mais energia</div>
+            </div>
           </div>
         </div>
-        <div class="row" style="margin-top:12px; justify-content:space-between;">
+
+        <!-- MODO AVANÇADO -->
+        <div class="config-mode" id="advancedMode" style="display:none;">
+          <div class="inputs">
+            <div>
+              <label>💧 Umidade mínima (%)</label>
+              <input id="low" type="number" value="35" min="0" max="100">
+              <div class="helper">Quando regar (umidade baixa)</div>
+            </div>
+            <div>
+              <label>💧 Umidade máxima (%)</label>
+              <input id="high" type="number" value="45" min="0" max="100">
+              <div class="helper">Quando parar de regar (umidade alta)</div>
+            </div>
+            <div>
+              <label>⏱️ Tempo máximo de irrigação (s)</label>
+              <input id="tmax" type="number" value="30" min="5" max="300">
+              <div class="helper">Segurança: máximo de tempo regando</div>
+            </div>
+            <div>
+              <label>⏳ Intervalo mínimo entre irrigações (min)</label>
+              <input id="tgap" type="number" value="15" min="1" max="1440">
+              <div class="helper">Tempo de espera entre irrigações</div>
+            </div>
+            <div>
+              <label>📊 Sensor - Solo seco (valor bruto)</label>
+              <input id="rawDry" type="number" value="3100" min="0" max="4095">
+              <div class="helper">Calibração: valor quando solo está seco</div>
+            </div>
+            <div>
+              <label>📊 Sensor - Solo molhado (valor bruto)</label>
+              <input id="rawWet" type="number" value="1400" min="0" max="4095">
+              <div class="helper">Calibração: valor quando solo está molhado</div>
+            </div>
+            <div>
+              <label>🔄 Intervalo de medição (ms)</label>
+              <input id="sensorInterval" type="number" value="2000" min="100" step="100">
+              <div class="helper">Frequência das leituras do sensor</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:16px; justify-content:space-between;">
           <div class="helper" id="cfgMsg"></div>
-          <button class="btn primary" id="btnSalvar">Salvar configuração</button>
+          <button class="btn primary" id="btnSalvar">💾 Salvar configuração</button>
         </div>
       </div>
 
@@ -263,36 +388,44 @@
       </div>
       <div class="inputs">
         <div style="grid-column:span 2;">
-          <label>Nome da Planta *</label>
+          <label>🌱 Nome da Planta *</label>
           <input id="plantName" type="text" placeholder="Ex: Tomate, Alface, Manjericão...">
+          <div class="helper">💡 Dê um nome para identificar facilmente sua planta</div>
         </div>
         <div>
-          <label>Moisture low (%) *</label>
-          <input id="plantLow" type="number" value="35">
+          <label>💧 Quando regar? (umidade mínima %) *</label>
+          <input id="plantLow" type="number" value="35" min="10" max="80">
+          <div class="helper">Solo considerado "seco" - quando iniciar irrigação</div>
         </div>
         <div>
-          <label>Moisture high (%) *</label>
-          <input id="plantHigh" type="number" value="45">
+          <label>💧 Quando parar? (umidade máxima %) *</label>
+          <input id="plantHigh" type="number" value="45" min="20" max="90">
+          <div class="helper">Solo considerado "úmido" - quando parar irrigação</div>
         </div>
         <div>
-          <label>tMaxIrrSec (s) *</label>
-          <input id="plantTmax" type="number" value="30">
+          <label>⏱️ Tempo máximo regando (segundos) *</label>
+          <input id="plantTmax" type="number" value="30" min="5" max="300">
+          <div class="helper">Segurança: tempo máximo que a bomba pode ficar ligada</div>
         </div>
         <div>
-          <label>tMinGapMin (min) *</label>
-          <input id="plantTgap" type="number" value="15">
+          <label>⏳ Intervalo entre irrigações (minutos) *</label>
+          <input id="plantTgap" type="number" value="15" min="1" max="1440">
+          <div class="helper">Tempo mínimo de espera entre uma irrigação e outra</div>
         </div>
         <div>
-          <label>rawDry *</label>
-          <input id="plantRawDry" type="number" value="3100">
+          <label>📊 Sensor solo seco (valor técnico) *</label>
+          <input id="plantRawDry" type="number" value="3100" min="0" max="4095">
+          <div class="helper">Calibração: valor do sensor quando solo está completamente seco</div>
         </div>
         <div>
-          <label>rawWet *</label>
-          <input id="plantRawWet" type="number" value="1400">
+          <label>📊 Sensor solo molhado (valor técnico) *</label>
+          <input id="plantRawWet" type="number" value="1400" min="0" max="4095">
+          <div class="helper">Calibração: valor do sensor quando solo está bem molhado</div>
         </div>
         <div>
-          <label>Intervalo de medição (ms) *</label>
+          <label>🔄 Frequência de verificação (milissegundos) *</label>
           <input id="plantSensorInterval" type="number" value="2000" min="100" step="100">
+          <div class="helper">Com que frequência verificar o sensor (2000ms = 2 segundos)</div>
         </div>
       </div>
       <div class="helper" id="plantMsg" style="margin-top:12px;"></div>
@@ -304,6 +437,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="./src/global-functions.js"></script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
