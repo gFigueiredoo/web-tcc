@@ -287,8 +287,8 @@
             <div class="config-item">
               <label>⏱️ Por quanto tempo regar?</label>
               <div class="time-options">
-                <button class="time-btn" data-seconds="15" onclick="selectTime(this, 15)">Rápido (15s)</button>
-                <button class="time-btn active" data-seconds="30" onclick="selectTime(this, 30)">Normal (30s)</button>
+                <button class="time-btn" data-seconds="15" onclick="selectTime(this, 3)">Rápido (3s)</button>
+                <button class="time-btn active" data-seconds="30" onclick="selectTime(this, 15)">Normal (15)</button>
                 <button class="time-btn" data-seconds="60" onclick="selectTime(this, 60)">Longo (1min)</button>
               </div>
               <div class="helper">💡 Comece com "Normal" e ajuste conforme necessário</div>
@@ -297,10 +297,10 @@
             <div class="config-item">
               <label>🔄 Com que frequência verificar?</label>
               <div class="frequency-options">
-                <button class="freq-btn" data-ms="1000" onclick="selectFreq(this, 1000)">A cada 1s</button>
                 <button class="freq-btn active" data-ms="2000" onclick="selectFreq(this, 2000)">A cada 2s</button>
-                <button class="freq-btn" data-ms="5000" onclick="selectFreq(this, 5000)">A cada 5s</button>
+                <button class="freq-btn" data-ms="600000" onclick="selectFreq(this, 600000)">A cada 10min</button>
                 <button class="freq-btn" data-ms="3600000" onclick="selectFreq(this, 3600000)">A cada 1h</button>
+                <button class="freq-btn" data-ms="86400000" onclick="selectFreq(this, 86400000)">A cada 24h</button>
               </div>
               <div class="helper">💡 Mais frequente = maior precisão, mas gasta mais energia</div>
             </div>
