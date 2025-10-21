@@ -16,6 +16,9 @@ let btnSalvar, btnIrrigar, plantSelect, plantsList, btnNovaPlanta;
 let plantModal, closeModal, btnCancelar, btnSalvarPlanta, modalTitle, plantMsg;
 let historyIntervalSelect;
 
+// Elementos do clima ambiente
+let temperatureValue, temperatureBadge, humidityValue, humidityBadge, climateLastUpdate;
+
 // Novos elementos para interface amigável
 let moistureRange, moistureDisplay, modeBtns, simpleMode, advancedMode;
 let timeBtns, freqBtns;
@@ -54,6 +57,29 @@ function init() {
   plantMsg = document.getElementById('plantMsg');
 
   historyIntervalSelect = document.getElementById('historyInterval');
+
+  // Elementos do clima ambiente
+  temperatureValue = document.getElementById('temperatureValue');
+  temperatureBadge = document.getElementById('temperatureBadge');
+  humidityValue = document.getElementById('humidityValue');
+  humidityBadge = document.getElementById('humidityBadge');
+  climateLastUpdate = document.getElementById('climateLastUpdate');
+
+  // Debug dos elementos de clima
+  console.log('🌡️ Inicializando elementos de clima:', {
+    temperatureValue: !!temperatureValue,
+    temperatureBadge: !!temperatureBadge,
+    humidityValue: !!humidityValue,
+    humidityBadge: !!humidityBadge,
+    climateLastUpdate: !!climateLastUpdate
+  });
+  
+  // Log adicional se algum elemento não foi encontrado
+  if (!temperatureValue) console.error('❌ Elemento temperatureValue não encontrado');
+  if (!temperatureBadge) console.error('❌ Elemento temperatureBadge não encontrado');
+  if (!humidityValue) console.error('❌ Elemento humidityValue não encontrado');
+  if (!humidityBadge) console.error('❌ Elemento humidityBadge não encontrado');
+  if (!climateLastUpdate) console.error('❌ Elemento climateLastUpdate não encontrado');
 
   // Novos elementos da interface amigável
   moistureRange = document.getElementById('moistureRange');
@@ -111,9 +137,14 @@ function init() {
   });
 
   // Inicializar funcionalidades
+  console.log('🚀 Iniciando todas as funcionalidades...');
   loadPlants();
   monitorSnapshot();
   monitorConfig();
+  
+  console.log('🌡️ Prestes a iniciar monitoramento do clima...');
+  monitorClimate();
+  
   initChart();
   monitorTelemetry();
   
@@ -480,6 +511,89 @@ function monitorConfig() {
       currentPlantLabel.className = 'badge';
     }
   });
+}
+
+function monitorClimate() {
+  console.log('🌡️ Iniciando monitoramento do clima...');
+  const climateRef = ref(db, `devices/${DEVICE_ID}/climate`);
+  onValue(climateRef, (snapshot) => {
+    const data = snapshot.val();
+    console.log('🌡️ Dados recebidos do Firebase:', data);
+    
+    if (!data || data.temperature === undefined || data.temperature === null || data.humidity === undefined || data.humidity === null) {
+      // Dados de demonstração quando não há dados reais do DHT22
+      console.log('🌡️ Usando dados de demonstração para clima');
+      updateClimateDisplay(23.5, 65.2, false);
+      return;
+    }
+    
+    console.log('🌡️ Usando dados reais do Firebase');
+    updateClimateDisplay(data.temperature, data.humidity, true, data.tsMs);
+  });
+}
+
+function updateClimateDisplay(temperature, humidity, isReal = false, timestamp = null) {
+  console.log('🌡️ Atualizando clima:', { temperature, humidity, isReal });
+  console.log('🌡️ Elementos disponíveis:', { 
+    temperatureValue: !!temperatureValue, 
+    temperatureBadge: !!temperatureBadge,
+    humidityValue: !!humidityValue,
+    humidityBadge: !!humidityBadge,
+    climateLastUpdate: !!climateLastUpdate
+  });
+  
+  // Atualizar temperatura
+  if (temperatureValue) {
+    temperatureValue.textContent = `${temperature.toFixed(1)}°C`;
+    console.log('✅ Temperatura atualizada para:', `${temperature.toFixed(1)}°C`);
+  } else {
+    console.error('❌ temperatureValue não encontrado no momento da atualização');
+  }
+  
+  if (temperatureBadge) {
+    if (temperature < 15) {
+      temperatureBadge.textContent = '❄️ Frio';
+      temperatureBadge.className = 'badge danger';
+    } else if (temperature > 35) {
+      temperatureBadge.textContent = '🔥 Quente';
+      temperatureBadge.className = 'badge warn';
+    } else {
+      temperatureBadge.textContent = '🌡️ Normal';
+      temperatureBadge.className = 'badge ok';
+    }
+  } else {
+    console.error('❌ temperatureBadge não encontrado');
+  }
+  
+  // Atualizar umidade do ar
+  if (humidityValue) {
+    humidityValue.textContent = `${humidity.toFixed(1)}%`;
+    console.log('✅ Umidade atualizada para:', `${humidity.toFixed(1)}%`);
+  } else {
+    console.error('❌ humidityValue não encontrado no momento da atualização');
+  }
+  
+  if (humidityBadge) {
+    if (humidity < 30) {
+      humidityBadge.textContent = '🏜️ Seco';
+      humidityBadge.className = 'badge warn';
+    } else if (humidity > 70) {
+      humidityBadge.textContent = '💧 Úmido';
+      humidityBadge.className = 'badge ok';
+    } else {
+      humidityBadge.textContent = '🌤️ Normal';
+      humidityBadge.className = 'badge';
+    }
+  }
+  
+  // Atualizar timestamp
+  if (climateLastUpdate) {
+    if (isReal && timestamp) {
+      climateLastUpdate.textContent = `Atualizado: ${new Date(timestamp).toLocaleTimeString()}`;
+    } else {
+      climateLastUpdate.textContent = isReal ? `Atualizado: ${new Date().toLocaleTimeString()}` : 'Demo - DHT22 não conectado';
+    }
+  }
 }
 
 function saveConfig(plantName = null) {

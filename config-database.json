@@ -20,6 +20,11 @@
         "pumpState": false,
         "state": "IDLE"
       },
+      "climate": {
+        "temperature": 23.5,
+        "humidity": 65.2,
+        "tsMs": 1729555200000
+      },
       "status": {
         "bootTsMs": 0,
         "heartbeatTsMs": 0
