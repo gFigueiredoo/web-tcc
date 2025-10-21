@@ -19,6 +19,9 @@ let historyIntervalSelect;
 // Elementos do clima ambiente
 let temperatureValue, temperatureBadge, humidityValue, humidityBadge, climateLastUpdate;
 
+// Elementos de luminosidade
+let lightValue, lightBadge, lightProgress, lightLastUpdate, lightRecommendation;
+
 // Novos elementos para interface amigável
 let moistureRange, moistureDisplay, modeBtns, simpleMode, advancedMode;
 let timeBtns, freqBtns;
@@ -65,6 +68,13 @@ function init() {
   humidityBadge = document.getElementById('humidityBadge');
   climateLastUpdate = document.getElementById('climateLastUpdate');
 
+  // Elementos de luminosidade
+  lightValue = document.getElementById('lightValue');
+  lightBadge = document.getElementById('lightBadge');
+  lightProgress = document.getElementById('lightProgress');
+  lightLastUpdate = document.getElementById('lightLastUpdate');
+  lightRecommendation = document.getElementById('lightRecommendation');
+
   // Debug dos elementos de clima
   console.log('🌡️ Inicializando elementos de clima:', {
     temperatureValue: !!temperatureValue,
@@ -80,6 +90,22 @@ function init() {
   if (!humidityValue) console.error('❌ Elemento humidityValue não encontrado');
   if (!humidityBadge) console.error('❌ Elemento humidityBadge não encontrado');
   if (!climateLastUpdate) console.error('❌ Elemento climateLastUpdate não encontrado');
+
+  // Debug dos elementos de luminosidade
+  console.log('☀️ Inicializando elementos de luminosidade:', {
+    lightValue: !!lightValue,
+    lightBadge: !!lightBadge,
+    lightProgress: !!lightProgress,
+    lightLastUpdate: !!lightLastUpdate,
+    lightRecommendation: !!lightRecommendation
+  });
+  
+  // Log adicional se algum elemento não foi encontrado
+  if (!lightValue) console.error('❌ Elemento lightValue não encontrado');
+  if (!lightBadge) console.error('❌ Elemento lightBadge não encontrado');
+  if (!lightProgress) console.error('❌ Elemento lightProgress não encontrado');
+  if (!lightLastUpdate) console.error('❌ Elemento lightLastUpdate não encontrado');
+  if (!lightRecommendation) console.error('❌ Elemento lightRecommendation não encontrado');
 
   // Novos elementos da interface amigável
   moistureRange = document.getElementById('moistureRange');
@@ -144,6 +170,9 @@ function init() {
   
   console.log('🌡️ Prestes a iniciar monitoramento do clima...');
   monitorClimate();
+  
+  console.log('☀️ Prestes a iniciar monitoramento da luminosidade...');
+  monitorLight();
   
   initChart();
   monitorTelemetry();
@@ -592,6 +621,99 @@ function updateClimateDisplay(temperature, humidity, isReal = false, timestamp =
       climateLastUpdate.textContent = `Atualizado: ${new Date(timestamp).toLocaleTimeString()}`;
     } else {
       climateLastUpdate.textContent = isReal ? `Atualizado: ${new Date().toLocaleTimeString()}` : 'Demo - DHT22 não conectado';
+    }
+  }
+}
+
+function monitorLight() {
+  console.log('☀️ Iniciando monitoramento de luminosidade...');
+  const lightRef = ref(db, `devices/${DEVICE_ID}/light`);
+  onValue(lightRef, (snapshot) => {
+    const data = snapshot.val();
+    console.log('☀️ Dados de luminosidade recebidos do Firebase:', data);
+    
+    if (!data || data.lux === undefined || data.lux === null) {
+      // Dados simulados para demonstração
+      const simulatedLux = Math.floor(Math.random() * 1000) + 100; // Entre 100 e 1100 lux
+      console.log('☀️ Usando dados simulados de luminosidade');
+      updateLightDisplay(simulatedLux, false);
+      return;
+    }
+    
+    console.log('☀️ Usando dados reais do Firebase');
+    updateLightDisplay(data.lux, true, data.tsMs);
+  });
+}
+
+function updateLightDisplay(lux, isReal = false, timestamp = null) {
+  console.log('☀️ Atualizando luminosidade:', { lux, isReal });
+  console.log('☀️ Elementos disponíveis:', { 
+    lightValue: !!lightValue, 
+    lightBadge: !!lightBadge,
+    lightProgress: !!lightProgress,
+    lightLastUpdate: !!lightLastUpdate,
+    lightRecommendation: !!lightRecommendation
+  });
+  
+  // Atualizar valor principal
+  if (lightValue) {
+    lightValue.textContent = `${lux.toFixed(0)} lux`;
+    console.log('✅ Luminosidade atualizada para:', `${lux.toFixed(0)} lux`);
+  } else {
+    console.error('❌ lightValue não encontrado no momento da atualização');
+  }
+  
+  // Atualizar badge com base no nível de luz
+  if (lightBadge) {
+    if (lux < 10) {
+      lightBadge.textContent = '🌙 Muito Escuro';
+      lightBadge.className = 'badge danger';
+    } else if (lux < 100) {
+      lightBadge.textContent = '🌆 Ambiente Interno';
+      lightBadge.className = 'badge warn';
+    } else if (lux < 500) {
+      lightBadge.textContent = '☁️ Nublado';
+      lightBadge.className = 'badge';
+    } else if (lux < 1000) {
+      lightBadge.textContent = '🌤️ Claro';
+      lightBadge.className = 'badge ok';
+    } else {
+      lightBadge.textContent = '☀️ Sol Direto';
+      lightBadge.className = 'badge ok';
+    }
+  } else {
+    console.error('❌ lightBadge não encontrado');
+  }
+  
+  // Atualizar barra de progresso (0-1500 lux como referência máxima)
+  if (lightProgress) {
+    const progressPercent = Math.min((lux / 1500) * 100, 100);
+    lightProgress.style.width = `${progressPercent}%`;
+  }
+  
+  // Atualizar recomendações para plantas
+  if (lightRecommendation) {
+    let recommendation = '';
+    if (lux < 50) {
+      recommendation = '💡 Muito escuro - plantas precisam de mais luz';
+    } else if (lux < 200) {
+      recommendation = '🌿 Bom para plantas de sombra';
+    } else if (lux < 800) {
+      recommendation = '🌱 Ideal para a maioria das plantas';
+    } else if (lux < 1200) {
+      recommendation = '🌞 Excelente para plantas que gostam de sol';
+    } else {
+      recommendation = '🔥 Muito intenso - pode queimar folhas delicadas';
+    }
+    lightRecommendation.textContent = recommendation;
+  }
+  
+  // Atualizar timestamp
+  if (lightLastUpdate) {
+    if (isReal && timestamp) {
+      lightLastUpdate.textContent = `Atualizado: ${new Date(timestamp).toLocaleTimeString()}`;
+    } else {
+      lightLastUpdate.textContent = isReal ? `Atualizado: ${new Date().toLocaleTimeString()}` : 'Demo - Sensor não conectado';
     }
   }
 }
