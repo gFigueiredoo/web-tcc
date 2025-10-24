@@ -1,0 +1,27 @@
+Este é o meu TCC, criei ele em LaTex overlaf, verifique o meu artico e também o meu projeto, desde quando eu fiz o artigo até eu toda a implementação mudou várias coisas, por exemplo estou utilizando ESP32 ao invés de arduino, também implementei algumas novas ideias, como medir a umidade do ar e temperatura, sensor de luz e luminosidade, configurações manuais de irrigaçao, o usuário pode escolher os parametros para iniciar irrigação, entre outras coisas. Quero que analise todo o meu projeto, todo o código que foi feito e toda minha implementação e edite o que for necessário para deixar o artigo tcc coerente com o meu código. analise tanto o código web, app.js, index.html quando.o código do esp. Também tem o prompt que utilizo para explicar meu projeto para a IA para ajudar vocÊ, ele nao está 100% completo, mas da para usar para ajudar a entender também. analise também a estrutura do banco de dados e coloque no artigo (arquivo config-database.json)
+
+crie um arquivo tcc_v2 com a versão melhorada conforme o solicitado
+
+
+
+pontos de atenção para mudar:
+
+3.6 Protocolo Experimental - experimento mais simples do que 12 vasos
+
+Arquitetura Física e Eletrônica - ajustar com os novos sensores
+
+\chapter{Implementação e Resultados}
+
+
+tcc v3
+esse é o meu tcc, estou focado agora em escrever o artigo, o meu artigo está nos arquivos tcc_v2.tex. Porém tenho algumas coisas para melhorar. Eu acho que não estou seguindo pela ideia de economia de agua, eu quero mudar isso e seguir por outro caminho, pelo caminho de automatização mesmo, facilidade, a pessoa poder monitorar a planta e cuidar ela da melhor forma, nao deixar ela sem agua, entre outras coisas, quero que você melhore essa parte e crie coisas caso necessário.
+
+Também gostaria de adicionar espaços para colocar algumas imagens que seja relevante para o meu artigo, para esse TCC. deixe alguns espaços que você julgue interessante colocar imagem e específique a imagem do que.
+
+Eu também não irei testar com inúmeras plantas e vasos, estou testando com 3 vasos, são dois medios e um grande. O que percebi é que a calibração do sensor depende do tamanho do vaso, pois depende da quantidade de terra, nesse tcc a calibração terá que ser feita de forma manual para cada caso. siga nessa linha também
+
+Analise todo o meu projeto, tanto os códigos html e javascript e os textos também, de tcc_v2, etc... e façaa versão melhorada do artigo, o tcc_v3, pode dividir em duas ou tres partes para não exceder o limite de tokens.
+
+O artigo está muito dividido por \item, tem seções inteiras com isso, mude isso também, coloque mais paragrafos explicativos ou faça de algum outro jeito que não use tanto \item mas também pode manter em lugares que vocÊ achar relevante.
+
+Me faça perguntas caso ache relevante para desenvolver o melhor artigo necessário
