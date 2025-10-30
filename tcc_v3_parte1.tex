@@ -1,0 +1,312 @@
+\documentclass[twoside,english,brazilian]{UNISINOSmonografia}
+\usepackage[utf8]{inputenc} % charset do texto (utf8, latin1, etc.)
+\usepackage[T1]{fontenc}    % encoding da fonte (afeta a sep. de sílabas)
+\usepackage{bibentry}       % para inserir refs. bib. no meio do texto
+\usepackage[alf]{abntex2cite}
+
+%=======================================================================
+% Dados gerais sobre o trabalho (mantidos para capa/folha de rosto).
+%=======================================================================
+\autor{Figueiredo Carolino}{Gabriel}
+\titulo{Sistema Inteligente de Monitoramento e Irrigação Automatizada para Plantas Domésticas baseado em IoT}
+\subtitulo{Solução Integrada de Automatização Residencial com ESP32, Firebase e Interface Web Adaptativa}
+\orientador[Dr.]{Lacerda}{Guilherme}
+
+\unidade{Unidade Acadêmica de Graduação}
+\curso{Curso de Bacharelado em Ciência da Computação}
+\natureza{%
+Monografia apresentada como requisito parcial para obtenção do título de Bacharel em Ciência da Computação, pelo Curso de Ciência da Computação da Universidade do Vale do Rio dos Sinos (UNISINOS)
+}
+\local{Porto Alegre}
+\ano{2025}
+
+% Palavras-chave em PT para metadados (atualizadas)
+\palavrachave{brazilian}{automação residencial}
+\palavrachave{brazilian}{Internet das Coisas}
+\palavrachave{brazilian}{monitoramento inteligente}
+\palavrachave{brazilian}{ESP32}
+\palavrachave{brazilian}{Firebase}
+\palavrachave{brazilian}{plantas domésticas}
+
+%=======================================================================
+% Início do documento.
+%=======================================================================
+\begin{document}
+\capa
+\folhaderosto
+
+%=======================================================================
+% Página inicial do artigo no padrão do exemplo da UNISINOS
+% (título PT/EN, autoria com notas de rodapé, resumo/abstract e palavras-chave).
+%=======================================================================
+\clearpage
+\thispagestyle{plain}
+\begin{center}
+\MakeUppercase{TÍTULO EM PORTUGUÊS: Sistema Inteligente de Monitoramento e Irrigação Automatizada para Plantas Domésticas baseado em IoT}\\[0.75em]
+\MakeUppercase{TÍTULO EM OUTRO IDIOMA: Intelligent Monitoring and Automated Irrigation System for Household Plants based on IoT}\\[1.5em]
+
+Gabriel Figueiredo Carolino\footnote{Bacharelando em Ciência da Computação (UNISINOS). E-mail: \texttt{gabrielcarolino962@gmail.com}.} \\
+Orientador: Prof. Dr. Guilherme Lacerda\footnote{UNISINOS. E-mail: \texttt{guilhermeslacerda@gmail.com}.}
+\end{center}
+
+\bigskip
+
+\noindent\textbf{Resumo:} Este artigo apresenta o desenvolvimento e avaliação de um sistema inteligente de monitoramento e irrigação automatizada para ambientes residenciais, focado na facilidade de uso e conveniência para cuidadores de plantas domésticas. A solução integra tecnologias de Internet das Coisas (IoT) através de sensores ambientais múltiplos conectados a um microcontrolador ESP32, comunicação em tempo real via Firebase Realtime Database e uma interface web responsiva com dois modos de operação. O sistema elimina a necessidade de monitoramento manual constante, prevenindo tanto a morte de plantas por falta de água quanto problemas causados por irrigação excessiva. A arquitetura proposta adapta-se automaticamente às necessidades específicas de diferentes espécies vegetais e tamanhos de vasos, proporcionando tranquilidade e praticidade aos usuários através de automação residencial inteligente.
+
+\medskip
+\noindent\textbf{Palavras-chave:} automação residencial; Internet das Coisas; monitoramento inteligente; ESP32; Firebase; plantas domésticas.
+
+\medskip
+\noindent\textbf{Abstract:} This paper presents the development and evaluation of an intelligent monitoring and automated irrigation system for residential environments, focused on ease of use and convenience for household plant caregivers. The solution integrates Internet of Things (IoT) technologies through multiple environmental sensors connected to an ESP32 microcontroller, real-time communication via Firebase Realtime Database, and a responsive web interface with two operation modes. The system eliminates the need for constant manual monitoring, preventing both plant death from lack of water and problems caused by excessive irrigation. The proposed architecture automatically adapts to the specific needs of different plant species and pot sizes, providing peace of mind and practicality to users through intelligent home automation.
+
+\medskip
+\noindent\textbf{Key-words:} home automation; Internet of Things; intelligent monitoring; ESP32; Firebase; household plants.
+
+%=======================================================================
+% 1 INTRODUÇÃO
+%=======================================================================
+\chapter{Introdução}
+
+O cultivo de plantas em ambientes domésticos tem se tornado cada vez mais popular, especialmente em contextos urbanos onde a conexão com a natureza é limitada. No entanto, o cuidado adequado de plantas domésticas apresenta desafios significativos para a maioria das pessoas. A irrigação adequada representa o principal obstáculo, exigindo conhecimento específico sobre as necessidades hídricas de cada espécie, monitoramento constante das condições do solo e disponibilidade regular para realizar os cuidados necessários.
+
+A rotina moderna, com suas demandas profissionais e pessoais intensas, frequentemente resulta em esquecimento ou negligência no cuidado das plantas. Muitas pessoas relatam frustração ao perder plantas por falta de água durante viagens, períodos de trabalho intenso ou simplesmente por não conseguir estabelecer uma rotina consistente de cuidados. Por outro lado, o excesso de zelo pode levar à irrigação excessiva, causando apodrecimento das raízes e morte das plantas por motivos opostos.
+
+% [ESPAÇO PARA IMAGEM 1: Comparação visual de plantas bem cuidadas vs negligenciadas]
+% Inserir aqui uma imagem mostrando o contraste entre plantas saudáveis mantidas com automação 
+% versus plantas que sofreram com cuidados inconsistentes ou inadequados
+
+A automatização residencial, potencializada pelas tecnologias de Internet das Coisas (IoT), oferece uma solução elegante para esses desafios. Sistemas inteligentes podem assumir a responsabilidade pelo monitoramento contínuo e cuidados automatizados, liberando os usuários da preocupação constante e garantindo que as plantas recebam exatamente a quantidade de água necessária no momento adequado.
+
+Este trabalho aborda especificamente a necessidade de sistemas de automatização que sejam ao mesmo tempo tecnicamente robustos e extremamente simples de usar. A solução proposta reconhece que nem todos os usuários possuem conhecimento técnico avançado, oferecendo interfaces adaptativas que atendem tanto iniciantes quanto usuários experientes. O foco central está na tranquilidade e praticidade proporcionadas pela automação, permitindo que as pessoas desfrutem dos benefícios das plantas domésticas sem as preocupações tradicionais associadas aos seus cuidados.
+
+\medskip
+\noindent\textbf{Problema Central.} Como desenvolver um sistema de automação residencial que elimine efetivamente as preocupações e dificuldades relacionadas ao cuidado de plantas domésticas, proporcionando monitoramento inteligente e intervenções automatizadas que se adaptem às necessidades específicas de diferentes espécies e condições ambientais?
+
+\medskip
+\noindent\textbf{Objetivo Geral.} Desenvolver e validar um sistema IoT integrado que automatize completamente o monitoramento e irrigação de plantas domésticas, oferecendo uma solução prática e confiável que permita aos usuários cultivar plantas com sucesso independentemente de seu nível de experiência ou disponibilidade de tempo.
+
+\medskip
+\noindent\textbf{Objetivos Específicos.}
+\begin{itemize}
+    \item Implementar monitoramento ambiental contínuo através de sensores de umidade do solo, temperatura, umidade do ar e luminosidade integrados a microcontrolador ESP32;
+    \item Desenvolver sistema de controle automatizado com algoritmos adaptativos que respondam às necessidades específicas de diferentes espécies de plantas;
+    \item Criar interface web responsiva com dois modos de operação (simples e avançado) para atender usuários com diferentes níveis de conhecimento técnico;
+    \item Estabelecer comunicação em tempo real através de Firebase Realtime Database para monitoramento remoto e controle via dispositivos móveis e computadores;
+    \item Validar a eficácia do sistema através de testes práticos com três vasos de diferentes tamanhos, demonstrando adaptabilidade e confiabilidade;
+    \item Desenvolver metodologia de calibração específica para diferentes volumes de substrato, considerando as particularidades de vasos pequenos, médios e grandes.
+\end{itemize}
+
+\noindent\textbf{Contribuições Principais.} Este trabalho oferece as seguintes contribuições para a área de automação residencial e IoT aplicada ao cultivo doméstico:
+
+A primeira contribuição consiste no desenvolvimento de uma arquitetura IoT completa e acessível que integra hardware de baixo custo (ESP32 e sensores) com serviços em nuvem (Firebase) e interface web moderna. Esta arquitetura demonstra como tecnologias emergentes podem ser aplicadas de forma prática para resolver problemas cotidianos reais.
+
+A segunda contribuição refere-se à criação de interfaces adaptativas que democratizam o acesso à tecnologia de automação. O sistema oferece um modo simples com controles intuitivos para usuários iniciantes, enquanto mantém funcionalidades avançadas disponíveis para usuários experientes, eliminando barreiras técnicas sem sacrificar capacidades.
+
+A terceira contribuição apresenta uma metodologia científica para calibração de sensores capacitivos de umidade considerando diferentes volumes de substrato. Esta metodologia é especialmente relevante pois reconhece que vasos de tamanhos diferentes requerem calibrações específicas devido às variações na distribuição de umidade e características físicas do substrato.
+
+A quarta contribuição estabelece um protocolo experimental reproduzível para avaliação de sistemas de automação residencial, considerando métricas práticas como facilidade de uso, confiabilidade operacional e satisfação do usuário, além das tradicionais métricas técnicas de desempenho.
+
+Finalmente, o trabalho contribui com uma análise detalhada dos fatores que influenciam a adoção de tecnologias de automação residencial, identificando barreiras práticas e propondo soluções que facilitem a implementação em larga escala.
+
+\noindent\textbf{Organização do Artigo.} Este documento está estruturado de forma a apresentar progressivamente o desenvolvimento, implementação e validação da solução proposta. A Seção 2 estabelece a fundamentação teórica necessária e analisa trabalhos relacionados na área. A Seção 3 descreve detalhadamente os materiais utilizados e a metodologia experimental adotada. A Seção 4 apresenta a arquitetura completa do sistema proposto, incluindo aspectos de hardware, software e integração. A Seção 5 documenta a implementação prática e os resultados obtidos nos testes. A Seção 6 discute as limitações identificadas e propõe direções para trabalhos futuros. Finalmente, a Seção 7 apresenta as conclusões e reflexões sobre o impacto da solução desenvolvida.
+
+%=======================================================================
+% 2 FUNDAMENTAÇÃO TEÓRICA E TRABALHOS RELACIONADOS
+%=======================================================================
+\chapter{Fundamentação Teórica e Trabalhos Relacionados}
+
+\section{Automação Residencial e Qualidade de Vida}
+
+A automação residencial representa uma evolução natural na busca por maior conforto, segurança e eficiência nos ambientes domésticos. Diferentemente dos primeiros sistemas automatizados que focavam principalmente em controle de temperatura e iluminação, as soluções modernas abraçam uma visão holística do lar como um ecossistema inteligente e responsivo às necessidades dos habitantes.
+
+No contexto específico do cultivo doméstico, a automação assume um papel particularmente importante ao eliminar uma fonte significativa de ansiedade e responsabilidade para muitas pessoas. A preocupação constante com o bem-estar das plantas, especialmente durante ausências prolongadas, representa um fator limitante que impede muitos indivíduos de desfrutar dos benefícios reconhecidos das plantas domésticas, incluindo melhoria da qualidade do ar, redução do estresse e conexão com a natureza.
+
+Estudos na área de psicologia ambiental demonstram que a presença de plantas em ambientes internos contribui significativamente para o bem-estar psicológico e físico dos ocupantes \cite{silva2019}. No entanto, essas mesmas pesquisas identificam que a "ansiedade de cuidado" – a preocupação constante sobre se as plantas estão recebendo cuidados adequados – pode paradoxalmente reduzir os benefícios psicológicos esperados. A automação resolve essa contradição ao assumir a responsabilidade pelo cuidado técnico, permitindo que as pessoas se concentrem nos aspectos prazerosos da convivência com plantas.
+
+% [ESPAÇO PARA IMAGEM 2: Interface do sistema mostrando modo simples vs avançado]
+% Inserir aqui uma captura de tela mostrando lado a lado o modo simples (com sliders e botões intuitivos)
+% e o modo avançado (com campos numéricos e configurações técnicas detalhadas)
+
+\section{Internet das Coisas Aplicada ao Ambiente Doméstico}
+
+A Internet das Coisas (IoT) fundamenta-se na premissa de que objetos cotidianos podem se tornar "inteligentes" através da incorporação de sensores, processamento local e conectividade. No ambiente doméstico, essa inteligência distribuída cria oportunidades para sistemas que aprendem, adaptam-se e respondem automaticamente às condições em constante mudança.
+
+Para aplicações de cultivo doméstico, a IoT oferece vantagens específicas que transcendem a simples automação. A capacidade de coleta contínua de dados ambientais permite identificar padrões sutis que seriam imperceptíveis ao monitoramento humano ocasional. Por exemplo, variações graduais na umidade do solo ao longo de semanas podem indicar mudanças nas necessidades da planta devido ao crescimento, alterações sazonais ou desenvolvimento do sistema radicular.
+
+A conectividade proporcionada pela IoT também facilita o monitoramento remoto, aspecto crucial para pessoas que viajam frequentemente ou trabalham longas jornadas. A tranquilidade de poder verificar o status das plantas e, se necessário, intervir remotamente, remove uma barreira significativa para a adoção de plantas domésticas por pessoas com estilos de vida mais dinâmicos.
+
+Além disso, sistemas IoT bem projetados podem acumular dados históricos que se tornam progressivamente mais valiosos, permitindo otimizações baseadas no comportamento específico de cada planta e ambiente. Esta capacidade de "aprendizado" através de dados históricos diferencia soluções IoT de sistemas de automação tradicionais mais simples.
+
+\section{Tecnologias Habilitadoras}
+
+\subsection{Microcontrolador ESP32 e Capacidades de Processamento Local}
+
+O ESP32 representa uma evolução significativa em microcontroladores para aplicações IoT, combinando processamento dual-core, conectividade Wi-Fi e Bluetooth integradas, e consumo energético otimizado em um único chip de baixo custo. Para aplicações de automação residencial, essas características traduzem-se em capacidades práticas importantes.
+
+O processamento dual-core permite que o ESP32 execute simultaneamente tarefas de coleta de dados dos sensores e comunicação com serviços na nuvem, sem comprometer a responsividade do sistema. Esta capacidade é crucial para manter controle local confiável mesmo durante intermitências de conectividade, garantindo que as plantas continuem recebendo cuidados adequados independentemente do status da conexão de internet.
+
+A conectividade Wi-Fi integrada elimina a necessidade de componentes adicionais e simplifica significativamente a integração com redes domésticas existentes. A capacidade de reconexão automática e gerenciamento transparente de credenciais de rede contribui para a confiabilidade operacional necessária em sistemas de automação residencial.
+
+O baixo consumo energético do ESP32, especialmente quando utiliza modos de economia de energia, torna viável a operação contínua por longos períodos. Embora este projeto utilize alimentação contínua, a eficiência energética contribui para a sustentabilidade ambiental e reduz custos operacionais.
+
+\subsection{Sensores Capacitivos e Precisão de Medição}
+
+Sensores capacitivos de umidade do solo representam um avanço significativo em relação aos sensores resistivos tradicionais, oferecendo maior durabilidade, precisão e estabilidade ao longo do tempo. O princípio de funcionamento baseado na medição de constante dielétrica do substrato elimina problemas de corrosão eletrolítica que afetam sensores resistivos.
+
+Para aplicações de cultivo doméstico, a precisão e confiabilidade dos sensores capacitivos são especialmente importantes devido à natureza crítica das decisões de irrigação. Leituras imprecisas podem resultar em irrigação inadequada, comprometendo a saúde das plantas e contradizendo o objetivo fundamental do sistema de automação.
+
+A estabilidade de longo prazo dos sensores capacitivos também contribui para reduzir necessidades de manutenção, aspecto crucial para sistemas destinados a usuários não técnicos. A capacidade de manter calibração precisa por períodos prolongados reduz a complexidade operacional e aumenta a confiança dos usuários no sistema.
+
+\subsection{Firebase Realtime Database e Sincronização em Tempo Real}
+
+O Firebase Realtime Database oferece capacidades de sincronização de dados em tempo real que são fundamentais para a experiência de usuário em aplicações de monitoramento remoto. A arquitetura push-based garante que atualizações sejam propagadas imediatamente para todas as interfaces conectadas, eliminando a necessidade de atualizações manuais ou polling periódico.
+
+Para sistemas de automação residencial, essa sincronização instantânea é crucial para manter os usuários informados sobre mudanças no status das plantas, especialmente durante eventos críticos como início ou fim de irrigação. A capacidade de visualizar mudanças em tempo real aumenta a confiança no sistema e proporciona transparência operacional.
+
+A persistência de dados oferecida pelo Firebase também facilita a implementação de funcionalidades de histórico e análise de tendências, permitindo que usuários identifiquem padrões ao longo do tempo e otimizem cuidados baseados em dados históricos reais.
+
+\section{Calibração de Sensores e Variações de Substrato}
+
+Um aspecto frequentemente subestimado em sistemas de irrigação automatizada é a influência significativa do volume e tipo de substrato nas leituras dos sensores de umidade. Esta questão assume particular importância em aplicações domésticas, onde vasos de diferentes tamanhos e tipos de terra são comuns.
+
+A calibração de sensores capacitivos deve considerar que a distribuição de umidade em substratos varia significativamente com o volume do recipiente. Em vasos pequenos, a umidade distribui-se mais uniformemente e responde rapidamente à irrigação. Em vasos grandes, gradientes de umidade podem existir entre diferentes regiões, e a resposta à irrigação é mais lenta e heterogênea.
+
+Além disso, diferentes tipos de substrato apresentam propriedades dielétricas distintas, afetando diretamente as leituras de sensores capacitivos. Substratos com maior componente orgânico, diferentes granulometrias ou aditivos como vermiculita ou perlita podem requerer ajustes específicos na calibração.
+
+Esta realidade prática exige que sistemas de automação residencial incorporem flexibilidade na calibração, permitindo ajustes específicos para cada combinação de vaso, substrato e espécie de planta. A metodologia de calibração deve ser suficientemente simples para usuários não técnicos, mas precisa o suficiente para garantir operação confiável.
+
+\section{Trabalhos Relacionados e Análise Comparativa}
+
+A literatura científica apresenta diversos trabalhos que abordam automação de irrigação em diferentes contextos e escalas. \citeonline{fernandes2021} desenvolveram um sistema para jardins residenciais que integra sensores de umidade, temperatura e pH com controle via aplicativo móvel. Embora tecnicamente sólido, o sistema exige conhecimento significativo sobre parâmetros de cultivo e não oferece adaptação automática para diferentes espécies de plantas.
+
+\citeonline{pereira2021} propuseram uma solução baseada em Arduino para cultivo de ervas aromáticas, enfatizando baixo custo e facilidade de montagem. O trabalho demonstra resultados positivos em termos de crescimento das plantas, mas a interface de usuário é limitada e não contempla monitoramento remoto ou histórico de dados.
+
+Mais recentemente, \citeonline{volkmann2022} apresentaram um sistema comercial que utiliza aprendizado de máquina para otimizar irrigação baseada em dados climáticos. Embora tecnologicamente avançado, o sistema tem custo elevado e complexidade que pode intimidar usuários domésticos típicos.
+
+\citeonline{medeiros2021} desenvolveram especificamente um sistema para plantas domésticas, com ênfase na simplicidade de uso. No entanto, o trabalho não aborda adequadamente questões de calibração para diferentes tipos de vasos e substratos, limitando sua aplicabilidade prática.
+
+Uma revisão abrangente conduzida por \citeonline{lima2019} analisa mais de 40 trabalhos na área de automação de irrigação, identificando tendências e lacunas. Os autores destacam que a maioria dos trabalhos foca em aspectos técnicos de hardware e comunicação, com atenção limitada às necessidades práticas dos usuários finais e questões de usabilidade.
+
+\subsection{Lacunas Identificadas e Oportunidades}
+
+A análise da literatura revela várias lacunas que este trabalho busca abordar:
+
+Primeira, existe uma carência de sistemas que equilibrem efetivamente sofisticação técnica com simplicidade de uso. Muitos trabalhos presumem usuários com conhecimento técnico significativo, criando barreiras de adoção para o público geral.
+
+Segunda, a questão da calibração específica por tipo e tamanho de vaso é frequentemente negligenciada ou tratada superficialmente. Esta limitação compromete a precisão operacional em aplicações domésticas reais.
+
+Terceira, poucos trabalhos abordam adequadamente aspectos psicológicos da automação residencial, como a importância da transparência operacional e controle do usuário para aceitação da tecnologia.
+
+Quarta, existe oportunidade significativa na criação de interfaces adaptativas que atendam tanto usuários iniciantes quanto experientes sem sacrificar funcionalidade ou aumentar complexidade desnecessariamente.
+
+Este trabalho contribui para preencher essas lacunas através de uma abordagem integrada que combina robustez técnica com foco centrado no usuário e atenção a aspectos práticos de implementação doméstica.
+
+%=======================================================================
+% 3 MATERIAIS E MÉTODOS
+%=======================================================================
+\chapter{Materiais e Métodos}
+
+\section{Visão Geral da Metodologia}
+
+A metodologia adotada neste trabalho segue uma abordagem de desenvolvimento centrado no usuário, combinando prototipagem iterativa com validação experimental controlada. O desenvolvimento foi estruturado em três fases principais: concepção e prototipagem do sistema, implementação e integração dos componentes, e validação experimental com múltiplos cenários de uso.
+
+A fase de concepção priorizou a identificação de requisitos reais de usuários através de observação direta e análise de padrões de comportamento relacionados ao cuidado de plantas domésticas. Esta abordagem garantiu que as decisões técnicas fossem orientadas por necessidades práticas reais, não apenas por possibilidades tecnológicas.
+
+A implementação seguiu princípios de modularidade e extensibilidade, permitindo ajustes e melhorias baseadas em feedback durante o desenvolvimento. A arquitetura modular também facilita replicação e adaptação do sistema para diferentes contextos e necessidades específicas.
+
+A validação experimental foi projetada para avaliar tanto aspectos técnicos quanto experiência do usuário, utilizando métricas quantitativas e qualitativas para uma avaliação abrangente da eficácia da solução proposta.
+
+% [ESPAÇO PARA IMAGEM 3: Esquema da arquitetura geral do sistema]
+% Inserir aqui um diagrama mostrando a visão geral da arquitetura: ESP32 no centro, 
+% conectado aos sensores (umidade, temperatura, luz), bomba d'água, Firebase na nuvem,
+% e interface web acessível por diferentes dispositivos
+
+\section{Arquitetura do Sistema}
+
+O sistema foi projetado seguindo uma arquitetura em três camadas que equilibra processamento local com capacidades de nuvem, garantindo operação confiável mesmo durante intermitências de conectividade.
+
+A camada de sensoriamento e atuação compreende os componentes físicos responsáveis pela coleta de dados ambientais e execução de ações de irrigação. Esta camada utiliza o microcontrolador ESP32 como elemento central de processamento e coordenação, conectado a sensores de umidade do solo capacitivo, sensor DHT22 para temperatura e umidade do ar, sensor de luminosidade LDR, e sistema de acionamento de bomba d'água através de circuito de amplificação com transistor TIP127.
+
+A camada de comunicação e persistência gerencia a troca de dados entre o sistema local e serviços em nuvem, utilizando Firebase Realtime Database para sincronização em tempo real. Esta camada implementa protocolos de reconexão automática, buffer local para operação offline e sincronização inteligente de dados.
+
+A camada de interface e controle oferece acesso ao sistema através de interface web responsiva que adapta-se automaticamente a diferentes dispositivos e tamanhos de tela. Esta camada implementa dois modos de operação distintos para atender usuários com diferentes níveis de experiência técnica.
+
+\section{Especificação de Hardware}
+
+\subsection{Componentes Principais}
+
+O microcontrolador ESP32 DevKit v1 foi selecionado como plataforma principal devido à combinação de capacidades de processamento, conectividade integrada e custo acessível. O modelo utilizado oferece 30 pinos GPIO, processamento dual-core de 240 MHz, 520 KB de SRAM e conectividade Wi-Fi 802.11 b/g/n.
+
+Para sensoriamento de umidade do solo, foi utilizado sensor capacitivo resistente à corrosão, conectado ao pino GPIO34 (ADC1_CH6) que oferece resolução de 12 bits para leituras analógicas precisas. A escolha do sensor capacitivo sobre alternativas resistivas foi motivada pela maior durabilidade e estabilidade de leituras ao longo do tempo.
+
+O monitoramento climático é realizado através de sensor DHT22, que oferece medição simultânea de temperatura (-40°C a +80°C com precisão ±0.5°C) e umidade relativa (0-100% com precisão ±2% RH). O protocolo de comunicação digital do DHT22 simplifica a integração e reduz susceptibilidade a ruídos eletromagnéticos.
+
+Para medição de luminosidade, foi implementado sensor LDR (Light Dependent Resistor) em configuração de divisor de tensão, oferecendo resposta adequada para a faixa de intensidades luminosas típicas em ambientes internos.
+
+\subsection{Sistema de Acionamento}
+
+O controle da bomba d'água utiliza arquitetura de amplificação de corrente baseada em transistor TIP127 (PNP) para acionamento de módulo relé de 5V. Esta configuração foi escolhida para garantir isolamento galvânico adequado e capacidade de corrente suficiente para bombas submersíveis pequenas.
+
+O circuito implementa lógica invertida apropriada para transistores PNP, onde um sinal LOW no pino GPIO4 do ESP32 ativa o transistor, energizando o relé e acionando a bomba. Um resistor de 1kΩ limita a corrente de base do transistor, garantindo operação segura dentro das especificações dos componentes.
+
+A bomba d'água selecionada opera em tensão de 3-6V com baixo consumo de corrente, adequada para aplicações domésticas com vasos de pequeno a médio porte. A escolha por bomba de baixa tensão contribui para segurança operacional e reduz complexidade do sistema de alimentação.
+
+% [ESPAÇO PARA IMAGEM 4: Diagrama do circuito eletrônico]
+% Inserir aqui o esquema elétrico completo mostrando ESP32, sensores, circuito do transistor TIP127,
+% relé, bomba d'água e todas as conexões com identificação dos pinos
+
+\section{Configuração Experimental}
+
+\subsection{Cenário de Teste}
+
+O protocolo experimental foi desenvolvido para validar a eficácia do sistema em condições realísticas de uso doméstico. O teste utiliza três vasos de diferentes tamanhos para avaliar a adaptabilidade do sistema a variações comuns em ambientes residenciais.
+
+O primeiro vaso (pequeno) possui capacidade de 1 litro, representando vasos típicos para plantas pequenas como suculentas ou ervas aromáticas. O segundo vaso (médio) possui capacidade de 3 litros, adequado para plantas de porte médio como samambaias ou plantas ornamentais comuns. O terceiro vaso (grande) possui capacidade de 7 litros, representando vasos para plantas maiores ou árvores pequenas.
+
+Todos os vasos utilizam o mesmo tipo de substrato (solo universal comercial) para eliminar variações relacionadas à composição do meio de cultivo. Esta padronização permite isolar os efeitos do volume do vaso nas características de distribuição de umidade e resposta à irrigação.
+
+\subsection{Metodologia de Calibração}
+
+A calibração dos sensores de umidade constitui aspecto crítico da metodologia, especialmente considerando as diferenças significativas entre vasos de diferentes tamanhos. O processo de calibração foi desenvolvido para ser executado de forma sistemática e reproduzível para cada vaso.
+
+O primeiro passo consiste na medição do ponto seco, onde o sensor é inserido no substrato completamente seco após período de secagem controlada de 48 horas em ambiente ventilado. Durante este período, são realizadas medições a cada 4 horas para garantir estabilização completa das leituras. O valor médio das últimas 10 medições define o parâmetro \textit{rawDry}.
+
+O segundo passo envolve a saturação controlada do substrato através de irrigação gradual até atingir capacidade de campo, evitando encharcamento excessivo que poderia distorcer as medições. Após período de equilíbrio de 2 horas, são realizadas medições para determinar o parâmetro \textit{rawWet}.
+
+A validação da calibração é realizada através de medições intermediárias com níveis conhecidos de umidade, verificando a linearidade da resposta do sensor na faixa de operação. Desvios significativos da linearidade indicam necessidade de recalibração ou substituição do sensor.
+
+\subsection{Protocolo de Teste de Longo Prazo}
+
+Para avaliar a confiabilidade operacional do sistema em condições reais de uso, foi implementado protocolo de teste de longo prazo com duração de 14 dias para cada configuração de vaso.
+
+Durante o período de teste, o sistema opera de forma completamente autônoma, com monitoramento contínuo mas sem intervenção manual exceto em situações de emergência claramente definidas (falha crítica de hardware ou condições que possam comprometer a segurança das plantas).
+
+Dados são coletados automaticamente a cada 30 segundos e armazenados localmente no ESP32 e remotamente no Firebase. Esta redundância garante preservação dos dados mesmo em caso de falhas de conectividade ou problemas técnicos.
+
+O protocolo inclui simulação de diferentes cenários operacionais, incluindo interrupções programadas de conectividade para validar capacidades de operação offline, variações controladas de temperatura ambiente para testar resposta dos algoritmos de controle, e períodos de alta demanda de irrigação para avaliar desempenho sob stress.
+
+\section{Métricas de Avaliação}
+
+\subsection{Métricas Técnicas}
+
+A avaliação técnica do sistema foca em aspectos quantificáveis de desempenho, confiabilidade e precisão. A precisão de medição dos sensores é avaliada através de comparação com instrumentos de referência calibrados, calculando erro médio absoluto e desvio padrão das medições.
+
+A confiabilidade operacional é quantificada através de métricas de disponibilidade (percentual de tempo em operação normal), tempo médio entre falhas (MTBF) e tempo médio de recuperação (MTTR) para diferentes tipos de eventos.
+
+A responsividade do sistema é medida através da latência entre detecção de condições que requerem irrigação e efetivo acionamento da bomba, incluindo tempos de comunicação com Firebase e processamento local.
+
+\subsection{Métricas de Experiência do Usuário}
+
+Além das métricas técnicas tradicionais, este trabalho incorpora avaliação sistemática da experiência do usuário através de métricas específicas para sistemas de automação residencial.
+
+A facilidade de configuração inicial é avaliada através do tempo necessário para usuários não técnicos completarem a instalação e configuração básica do sistema, incluindo calibração dos sensores e configuração de parâmetros para suas plantas específicas.
+
+A transparência operacional é medida através da capacidade dos usuários de compreender e confiar nas decisões automatizadas do sistema, avaliada através de questionários estruturados aplicados após diferentes períodos de uso.
+
+A satisfação geral com o sistema é quantificada através de escalas padronizadas que avaliam percepção de utilidade, facilidade de uso, confiabilidade e intenção de recomendação para outras pessoas.
+
+% [ESPAÇO PARA IMAGEM 5: Configuração experimental dos três vasos]
+% Inserir aqui uma foto mostrando os três vasos de diferentes tamanhos com o sistema instalado,
+% identificando claramente as diferenças de tamanho e a posição dos sensores em cada vaso
+
+Essas métricas combinadas oferecem avaliação abrangente que vai além de aspectos puramente técnicos, considerando o contexto real de aplicação e as necessidades práticas dos usuários finais do sistema.
