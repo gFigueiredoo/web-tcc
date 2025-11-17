@@ -1,0 +1,324 @@
+%=======================================================================
+% TCC v5 - PARTE 2: MATERIAIS E MÉTODOS + SISTEMA PROPOSTO
+% Gabriel Figueiredo Carolino - Sistema de Irrigação Automatizada IoT
+%=======================================================================
+
+%=======================================================================
+% 3 MATERIAIS E MÉTODOS
+%=======================================================================
+\chapter{Materiais e Métodos}
+
+\section{Metodologia Científica}
+
+Este trabalho segue a abordagem metodológica de \textbf{Design Science Research} (DSR), estruturada em seis etapas fundamentais: (1) \textbf{Identificação do problema} - caracterização das dificuldades no cuidado de plantas domésticas e limitações das soluções existentes; (2) \textbf{Definição de objetivos} - estabelecimento de requisitos para uma solução que equilibre funcionalidade técnica com simplicidade de uso; (3) \textbf{Design e desenvolvimento} - criação da arquitetura IoT integrada com hardware, software e interfaces; (4) \textbf{Demonstração} - implementação de protótipo funcional operando em cenários realísticos; (5) \textbf{Avaliação} - validação através de testes técnicos e de experiência do usuário; (6) \textbf{Comunicação} - documentação de resultados e contribuições.
+
+A validação experimental utiliza metodologia quantitativa para métricas técnicas de desempenho e abordagem quali-quantitativa para avaliação de experiência do usuário, permitindo avaliar tanto a eficácia técnica quanto a aceitação prática da solução desenvolvida.
+
+% IMAGEM 2: Diagrama da metodologia Design Science Research aplicada
+% DESCRIÇÃO: Fluxograma visual das 6 etapas da metodologia DSR aplicada especificamente ao projeto:
+% 1. Identificação do problema (dificuldades no cuidado de plantas domésticas)
+% 2. Definição de objetivos (sistema IoT com interface adaptativa)
+% 3. Design e desenvolvimento (arquitetura em 3 camadas, ESP32, Firebase)
+% 4. Demonstração (protótipo funcional, testes com 3 vasos)
+% 5. Avaliação (métricas técnicas + experiência do usuário)
+% 6. Comunicação (documentação científica, código aberto)
+% Incluir timeline do projeto, marcos específicos e entregas de cada etapa
+% Destacar iterações e refinamentos baseados em feedback
+\begin{figure}[htbp]
+\centering
+% \includegraphics[width=0.9\textwidth]{figuras/metodologia_dsr.png}
+\caption{Metodologia Design Science Research aplicada ao desenvolvimento do sistema IoT}
+\label{fig:metodologia_dsr}
+\end{figure}
+
+\section{Arquitetura do Sistema e Abordagem Experimental}
+
+O sistema foi projetado seguindo uma arquitetura em três camadas que equilibra processamento local com capacidades de nuvem, garantindo operação confiável mesmo durante intermitências de conectividade. Esta arquitetura modular facilita tanto a replicação quanto a extensão do sistema para diferentes contextos de aplicação.
+
+A \textbf{camada física} compreende os componentes de hardware responsáveis pela interação direta com o ambiente: microcontrolador ESP32 como unidade central de processamento, sensores de umidade do solo (capacitivo), temperatura e umidade do ar (DHT22), luminosidade (LDR), e sistema de acionamento de bomba d'água através de circuito amplificador com transistor PNP.
+
+A \textbf{camada de comunicação} gerencia a troca de dados entre o sistema local e serviços em nuvem, implementando protocolos de reconexão automática, buffer local para operação offline e sincronização inteligente de dados via Firebase Realtime Database.
+
+A \textbf{camada de interface} oferece acesso ao sistema através de interface web responsiva que se adapta automaticamente a diferentes dispositivos, implementando dois modos operacionais distintos (simples e avançado) para atender usuários com diferentes níveis de experiência técnica.
+
+\section{Especificação de Hardware e Materiais}
+
+\subsection{Componentes Principais}
+
+O microcontrolador \textbf{ESP32 DevKit v1} foi selecionado como plataforma principal devido à combinação ótima de capacidades de processamento, conectividade integrada e custo acessível. O modelo utilizado oferece 30 pinos GPIO, processamento dual-core de 240 MHz, 520 KB de SRAM, conectividade Wi-Fi e Bluetooth, proporcionando recursos suficientes para operação simultânea de múltiplas tarefas críticas.
+
+Para sensoriamento de umidade do solo, foi utilizado \textbf{sensor capacitivo v1.2} resistente à corrosão, conectado ao pino analógico GPIO34 que oferece resolução de 12 bits (4096 níveis) para leituras precisas. A escolha do sensor capacitivo sobre alternativas resistivas foi motivada pela maior durabilidade, estabilidade temporal e ausência de corrosão eletrolítica em contato prolongado com substrato úmido.
+
+O monitoramento climático é realizado através de sensor \textbf{DHT22}, oferecendo medição simultânea de temperatura (-40°C a +80°C com precisão ±0.5°C) e umidade relativa (0-100 porcento) com precisão ±2 porcento). O protocolo de comunicação digital one-wire simplifica a integração e reduz susceptibilidade a interferências eletromagnéticas.
+
+Para medição de luminosidade, foi implementado sensor \textbf{LDR (Light Dependent Resistor)} GL5528 em configuração de divisor de tensão, oferecendo resposta logarítmica adequada para a ampla faixa de intensidades luminosas típicas em ambientes internos (10 lux a 1000 lux).
+
+\subsection{Sistema de Acionamento e Alimentação}
+
+O controle da bomba de irrigação utiliza arquitetura de amplificação de corrente baseada em transistor \textbf{TIP127 (PNP)} para acionamento de módulo relé 5V/10A. Esta configuração foi selecionada para garantir isolamento galvânico adequado entre circuitos de controle e potência, além de capacidade de corrente suficiente para bombas submersíveis de pequeno porte.
+
+O circuito implementa lógica invertida apropriada para transistores PNP, onde um sinal LOW no pino GPIO4 do ESP32 ativa o transistor, energizando o relé e acionando a bomba. 
+
+A bomba d'água selecionada (modelo submersível 3-6V) opera com baixo consumo de corrente (300mA), adequada para aplicações domésticas com vasos de 1 a 10 litros. A escolha por bomba de baixa tensão contribui para segurança operacional e simplifica o sistema de alimentação, eliminando necessidade de conversores adicionais.
+
+\section{Metodologia de Calibração Experimental}
+
+\subsection{Protocolo de Calibração por Volume de Vaso}
+
+A calibração dos sensores de umidade constitui aspecto metodologicamente crítico desta pesquisa, especialmente considerando as diferenças significativas entre vasos de diferentes volumes. O protocolo foi desenvolvido para ser executado de forma sistemática e reproduzível, estabelecendo base científica sólida para operação confiável do sistema.
+
+O processo de calibração seguiu metodologia experimental controlada com as seguintes etapas:
+
+\textbf{Etapa 1 - Preparação do substrato}: Utilização de solo universal comercial padronizado.
+
+\textbf{Etapa 2 - Determinação do ponto seco}: Secagem controlada em ambiente ventilado (umidade relativa 40-50 porcento, temperatura 23±2°C) por 48 horas, com medições a cada 4 horas para garantir estabilização completa. Critério de estabilização: variação < 0,1 porcento entre medições consecutivas. O valor médio das últimas 10 medições define o parâmetro \textit{rawDry}.
+
+\textbf{Etapa 3 - Determinação do ponto saturado}: Saturação controlada do substrato através de irrigação gradual (50ml a cada 5 minutos) até atingir capacidade de campo, definida como cessação de drenagem livre após 30 minutos. Após período de equilíbrio de 2 horas, medições estabilizadas definem o parâmetro \textit{rawWet}.
+
+\textbf{Etapa 4 - Validação da linearidade}: Medições em pontos intermediários (25, 50, 75 porcento de saturação) para verificar linearidade da resposta sensor.
+
+% IMAGEM 3: Fluxograma do protocolo de calibração experimental
+% DESCRIÇÃO: Fluxograma detalhado mostrando as 4 etapas do protocolo de calibração:
+% Etapa 1: Preparação do substrato (solo universal, homogeneização, peneiramento)
+% Etapa 2: Ponto seco (secagem 48h, medições cada 4h, critério estabilização <0,1%)
+% Etapa 3: Ponto saturado (irrigação gradual 50ml/5min, capacidade de campo, equilíbrio 2h)
+% Etapa 4: Validação linearidade (pontos 25%, 50%, 75%, cálculo R²)
+% Incluir tempos específicos, critérios de qualidade, e exemplo de gráfico de linearidade
+% Destacar pontos críticos: estabilização, capacidade de campo, validação estatística
+\begin{figure}[htbp]
+\centering
+% \includegraphics[width=0.85\textwidth]{figuras/protocolo_calibracao.png}
+\caption{Fluxograma do protocolo de calibração experimental para diferentes volumes de vaso}
+\label{fig:protocolo_calibracao}
+\end{figure}
+
+\subsection{Controle de Variáveis Externas}
+
+Para garantir validade científica dos resultados experimentais, foram adotadas medidas de controle considerando as condições naturais de uso doméstico:
+
+\textbf{Controle térmico}: Os experimentos foram conduzidos em ambiente doméstico típico com variações naturais de temperatura, registradas continuamente via sensor DHT22. O monitoramento permitiu correlacionar variações térmicas com as leituras dos sensores capacitivos e taxa de evapotranspiração das plantas.
+
+\textbf{Controle de luminosidade}: Utilização de luz natural ambiente através de janelas, representando condições reais de uso doméstico. O sensor LDR registrou as variações de luminosidade ao longo do dia, permitindo análise da correlação entre intensidade luminosa e necessidades hídricas das plantas.
+
+\textbf{Controle de umidade relativa}: Monitoramento das variações naturais de umidade do ar via sensor DHT22, sem intervenção artificial. Os dados coletados permitiram avaliar como variações atmosféricas naturais influenciam diferentemente a evaporação conforme tamanho dos vasos.
+
+\textbf{Controle de correntes de ar}: Posicionamento dos vasos em área interna protegida de ventos diretos, mas sujeita às variações naturais de circulação de ar doméstico, simulando fielmente as condições reais de uso do sistema.
+
+\textbf{Controle de substrato}: Utilização do mesmo lote de solo comercial para todos os vasos, com homogeneização prévia através de mistura manual e peneiramento, eliminando variações na composição que poderiam afetar propriedades dielétricas e retenção hídrica.
+
+\section{Ferramentas de Desenvolvimento e Análise}
+
+\subsection{Ambiente de Desenvolvimento}
+
+O desenvolvimento do firmware para ESP32 foi realizado utilizando \textbf{Arduino IDE 2.2.1} com bibliotecas específicas: WiFi.h (conectividade), Firebase\_ESP\_Client v4.4.12 (comunicação com banco de dados), e bibliotecas auxiliares para tokenização e manipulação RTDB. A escolha do ambiente Arduino foi motivada pela maturidade do ecossistema, disponibilidade de bibliotecas e facilidade de replicação por outros pesquisadores.
+
+A interface web foi desenvolvida em \textbf{HTML5, CSS3 e JavaScript ES6+}, utilizando Firebase SDK v10.7.1 para comunicação em tempo real com o banco de dados. Para visualização de dados, foi integrada a biblioteca \textbf{Chart.js v4.4.4}, oferecendo gráficos interativos responsivos que se adaptam automaticamente a diferentes tamanhos de tela.
+
+\subsection{Ferramentas de Coleta e Análise de Dados}
+
+A coleta de dados experimentais foi estruturada utilizando múltiplas ferramentas para garantir redundância e facilitar análise posterior:
+
+\textbf{Coleta primária}: Firebase Realtime Database com estrutura hierárquica organizada por dispositivo, tipo de dados (snapshot, telemetria, eventos, configuração) e timestamp. Frequência de coleta: 30 segundos para dados ambientais, eventos síncronos para ações de irrigação.
+
+\textbf{Backup local}: Buffer circular no ESP32 (últimas 100 medições) para garantir continuidade da coleta durante interrupções de conectividade, com sincronização automática quando conexão é restabelecida.
+
+\textbf{Análise estatística}: Cálculo de médias, desvios-padrão, coeficientes de variação e testes de normalidade utilizando \textbf{Microsoft Excel 2021}. Métricas de desempenho incluem precisão de medição (comparação com referências), responsividade temporal (latência entre detecção e ação) e confiabilidade operacional (uptime e taxa de falhas).
+
+\section{Protocolo de Teste e Validação}
+
+\subsection{Cenário Experimental Controlado}
+
+O protocolo experimental foi desenvolvido para validar a eficácia do sistema em condições que simulam fielmente o uso doméstico real, considerando variações comuns de tamanhos de vaso e espécies de plantas encontradas em residências urbanas.
+
+\textbf{Configuração de vasos}: Três vasos representativos foram selecionados: (1) pequeno - 1,2L, diâmetro 12cm, altura 10cm; (2) médio - 3,5L, diâmetro 18cm, altura 15cm, para plantas ornamentais de porte médio; (3) grande - 7,8L, diâmetro 25cm, altura 20cm, para plantas maiores ou pequenas árvores domésticas.
+
+% IMAGEM 4: Setup experimental dos três vasos de teste
+% DESCRIÇÃO: Fotografia do ambiente experimental mostrando:
+% - Os 3 vasos (pequeno, médio, grande) com plantas cultivadas
+% - Sensores instalados (capacitivo no substrato, DHT22, LDR)
+% - Sistema de bombeamento (bomba submersível, mangueiras, reservatório)
+% - ESP32 e circuitos de controle (protoboard, transistor, relé)
+% - Medidas e especificações técnicas de cada configuração
+% - Ambiente doméstico típico (luz natural, temperatura ambiente)
+% Incluir legendas identificando cada componente e suas especificações
+\begin{figure}[htbp]
+\centering
+% \includegraphics[width=0.9\textwidth]{figuras/setup_experimental.jpg}
+\caption{Setup experimental dos três vasos de teste com sistema completo implementado}
+\label{fig:setup_experimental}
+\end{figure}
+
+\textbf{Duração e periodicidade}: Teste de longo prazo com 5 dias para cada configuração de vaso (total: 15 dias), permitindo validação de estabilidade temporal e adaptação a variações sazonais naturais. Coleta de dados contínua 24h/dia com armazenamento automático.
+
+\subsection{Métricas de Avaliação Técnica e de Experiência do Usuário}
+
+A avaliação do sistema foi estruturada considerando tanto aspectos técnicos quanto fatores subjetivos relacionados à experiência do usuário, proporcionando validação abrangente da solução desenvolvida.
+
+\textbf{Métricas técnicas de desempenho}:
+\begin{itemize}
+\item \textbf{Precisão de medição}: Erro médio absoluto e desvio-padrão das leituras de umidade comparadas com medições gravimétricas de referência (balança analítica ±0.1g)
+\item \textbf{Responsividade temporal}: Latência entre detecção de condição de irrigação e acionamento efetivo da bomba, incluindo tempos de comunicação Firebase
+\item \textbf{Confiabilidade operacional}: Percentual de disponibilidade do sistema, tempo médio entre falhas (MTBF) e tempo médio de recuperação (MTTR)
+\item \textbf{Eficiência energética}: Consumo de energia total do sistema durante operação normal e modos de baixo consumo
+\end{itemize}
+
+\textbf{Métricas de experiência do usuário}:
+\begin{itemize}
+\item \textbf{Facilidade de configuração inicial}: Tempo necessário para usuários não técnicos completarem instalação e calibração básica
+\item \textbf{Transparência operacional}: Capacidade dos usuários compreenderem e confiarem nas decisões automatizadas do sistema
+\item \textbf{Intenção de uso continuado}: Indicadores de aderência e recomendação da solução para outros usuários
+\end{itemize}
+
+%=======================================================================
+% 4 SISTEMA PROPOSTO
+%=======================================================================
+\chapter{Sistema Proposto}
+
+\section{Visão Geral da Arquitetura}
+
+O sistema proposto representa uma solução integrada de automação residencial que combina simplicidade de uso com robustez técnica, seguindo princípios de design centrado no usuário sem comprometer capacidades técnicas essenciais. A arquitetura foi projetada considerando modularidade, escalabilidade e facilidade de manutenção, garantindo que o sistema possa ser facilmente replicado, adaptado e estendido para diferentes contextos domésticos.
+
+A filosofia central do projeto baseia-se no conceito de "automação transparente", onde a tecnologia opera de forma quase invisível para o usuário, fornecendo cuidados contínuos e inteligentes às plantas, sem exigir intervenção ou conhecimento técnico constante. Esta abordagem reconhece que o valor principal da automação residencial reside na eliminação de preocupações e tarefas repetitivas, e não na exibição de complexidade tecnológica.
+
+O sistema integra três subsistemas principais que operam de forma coordenada e síncrona: o \textbf{subsistema de monitoramento ambiental}, responsável pela coleta contínua de dados sobre as condições do solo e do ambiente circundante; o \textbf{subsistema de controle inteligente}, que processa as informações coletadas e toma decisões automatizadas sobre irrigação baseadas em algoritmos adaptativos; e o \textbf{subsistema de interface e comunicação}, que proporciona acesso remoto, transparência operacional e controle manual quando necessário.
+
+% IMAGEM 5: Diagrama de arquitetura do sistema (3 camadas)
+% DESCRIÇÃO: Diagrama técnico mostrando a arquitetura em 3 camadas do sistema:
+% CAMADA FÍSICA: ESP32, sensores (capacitivo, DHT22, LDR), transistor PNP, relé, bomba
+% CAMADA COMUNICAÇÃO: Wi-Fi, Firebase Realtime Database, protocolos de reconexão, buffer local
+% CAMADA INTERFACE: Interface web responsiva, modos simples/avançado, Chart.js, controle remoto
+% Mostrar fluxo de dados entre camadas, protocolos de comunicação
+% Destacar pontos de falha e redundâncias, capacidades offline
+% Incluir especificações técnicas de cada componente e suas interconexões
+\begin{figure}[htbp]
+\centering
+% \includegraphics[width=0.9\textwidth]{figuras/arquitetura_sistema.png}
+\caption{Arquitetura do sistema em três camadas: física, comunicação e interface}
+\label{fig:arquitetura_sistema}
+\end{figure}
+
+\section{Subsistema de Monitoramento Ambiental}
+
+O subsistema de monitoramento ambiental constitui a base sensorial do sistema, implementando uma estratégia de coleta de dados multi-paramétrica que vai além da simples medição da umidade do solo. Esta abordagem holística reconhece que as necessidades hídricas das plantas são influenciadas por múltiplas variáveis ambientais que interagem de forma complexa.
+
+\subsection{Sensoriamento de Umidade do Solo}
+
+O sensor de umidade capacitivo representa o componente mais crítico do subsistema, posicionado estrategicamente no substrato para capturar variações representativas da disponibilidade hídrica na zona radicular. O posicionamento considera a distribuição típica do sistema radicular da espécie cultivada e evita áreas próximas às bordas do vaso, onde a evaporação periférica pode causar leituras não representativas do estado geral do substrato.
+
+A tecnologia capacitiva foi selecionada por sua superior estabilidade temporal, ausência de corrosão eletrolítica e resposta linear em uma ampla faixa de umidade. O sensor opera medindo variações na constante dielétrica do substrato, que se correlaciona diretamente com o conteúdo de água devido às propriedades elétricas distintivas da molécula H2O.
+
+% IMAGEM 6: Diagrama esquemático do circuito eletrônico
+% DESCRIÇÃO: Esquema técnico detalhado do circuito eletrônico mostrando:
+% - ESP32 DevKit v1 com pinout completo
+% - Sensor capacitivo conectado ao GPIO34 (ADC)
+% - DHT22 conectado ao GPIO digital
+% - LDR em divisor de tensão no GPIO analógico
+% - Transistor TIP127 (PNP) com resistores de base e pull-up
+% - Módulo relé 5V/10A com isolamento óptico
+% - Bomba submersível 3-6V com especificações de corrente
+% - Fonte de alimentação e regulação de tensão
+% - Capacitores de desacoplamento e proteções
+% Incluir valores de componentes, especificações técnicas e normas de segurança
+\begin{figure}[htbp]
+\centering
+% \includegraphics[width=0.9\textwidth]{figuras/esquema_circuito.png}
+\caption{Diagrama esquemático completo do circuito eletrônico do sistema}
+\label{fig:esquema_circuito}
+\end{figure}
+
+\subsection{Monitoramento Climático Integrado}
+
+O monitoramento climático por meio do sensor DHT22 fornece dados essenciais sobre a temperatura e a umidade do ar, variáveis que influenciam significativamente a taxa de transpiração das plantas e, consequentemente, suas necessidades hídricas. O sistema implementa gráficos e históricos que ajudam o usuário á entender e analisar a necessidade da planta de ser irrigada.
+
+Temperaturas elevadas e baixa umidade do ar aumentam a demanda transpirativa, exigindo ajustes nos limiares de irrigação. Condições de alta umidade relativa e temperaturas amenas reduzem esta demanda.
+
+\subsection{Sensor de Luminosidade e Fotoperíodo}
+
+O sensor de luminosidade LDR complementa o monitoramento ao fornecer informações sobre intensidade e duração da radiação disponível para fotossíntese. Plantas expostas a maior luminosidade apresentam metabolismo mais ativo, maior taxa fotossintética e, consequentemente, maiores necessidades hídricas.
+
+O sistema utiliza dados de luminosidade para implementar ajustes circadianos nos algoritmos de controle, reconhecendo que plantas têm necessidades hídricas diferentes durante períodos de atividade fotossintética diurna versus respiração noturna. Esta funcionalidade avançada diferencia a solução de sistemas mais simples que operam com limiares fixos independentes do ciclo natural das plantas.
+
+\section{Subsistema de Controle Inteligente}
+
+O subsistema de controle inteligente implementa a lógica central que transforma dados sensoriais em ações de irrigação contextualmente apropriadas. A arquitetura de controle baseia-se em uma máquina de estados finitos que opera autonomamente no microcontrolador ESP32, garantindo operação confiável mesmo durante interrupções de conectividade ou falhas de comunicação.
+
+\subsection{Máquina de Estados e Lógica de Decisão}
+
+A máquina de estados implementa três estados principais com transições bem definidas:
+
+\textbf{IDLE (Monitoramento Passivo)}: Estado normal de operação onde o sistema monitora continuamente condições ambientais e avalia necessidade de intervenção. A transição para irrigação ocorre quando umidade do solo cruza abaixo do limiar inferior configurado, considerando também dados contextuais de temperatura, umidade do ar e luminosidade.
+
+\textbf{IRRIGATING (Irrigação Ativa)}: Durante este estado, o sistema ativa a bomba d'água e monitora simultaneamente umidade do solo e tempo decorrido. A irrigação continua até que umidade atinja limiar superior configurado ou até que tempo máximo de segurança seja atingido, implementando proteção contra irrigação excessiva.
+
+\textbf{LOCKOUT (Período de Estabilização)}: Estado de espera obrigatório após cada ciclo de irrigação, permitindo distribuição uniforme da água no substrato e estabilização das leituras sensoriais. Este período previne oscilações indesejadas e garante que decisões subsequentes sejam baseadas em dados estabilizados.
+
+\section{Subsistema de Interface e Comunicação}
+
+O subsistema de interface representa a ponte entre automação técnica e experiência do usuário, implementando filosofia de design que prioriza simplicidade e intuitividade sem sacrificar funcionalidade avançada para usuários experientes.
+
+\subsection{Interface Web Responsiva e Adaptativa}
+
+A interface web foi desenvolvida utilizando tecnologias modernas (HTML5, CSS3, JavaScript ES6+) que garantem compatibilidade com ampla gama de dispositivos e navegadores. O design responsivo adapta-se automaticamente a smartphones, tablets e computadores desktop, oferecendo experiência consistente independente da plataforma de acesso.
+
+A arquitetura de interface implementa conceito inovador de \textbf{modos adaptativos}:
+
+\textbf{Modo Simples}: Utiliza controles visuais intuitivos como sliders, botões grandes e indicadores gráficos. Usuários configuram quando suas plantas devem ser regadas usando linguagem natural ("solo seco", "solo úmido") em vez de percentuais técnicos. Funcionalidades avançadas ficam ocultas, reduzindo complexidade cognitiva.
+
+\textbf{Modo Avançado}: Oferece acesso completo a todos os parâmetros técnicos, incluindo calibração manual de sensores, configuração detalhada de algoritmos de controle, análise de dados históricos e exportação de logs para análise externa.
+
+Esta dualidade garante que o sistema atenda tanto usuários iniciantes (que valorizam simplicidade) quanto experientes (que desejam controle granular) sem comprometer a experiência de nenhum grupo.
+
+% IMAGEM 7: Screenshots da interface web (modo simples vs avançado)
+% DESCRIÇÃO: Capturas de tela mostrando as duas interfaces:
+% MODO SIMPLES: Interface limpa com sliders grandes, indicadores visuais de umidade,
+% botões intuitivos ("Regar Agora", "Solo Seco/Úmido"), gráficos simples
+% MODO AVANÇADO: Painel técnico com parâmetros detalhados, calibração manual,
+% gráficos históricos complexos, logs de sistema, configurações avançadas
+% Mostrar responsividade (desktop, tablet, mobile)
+% Destacar elementos de usabilidade: cores, tipografia, hierarquia visual
+% Incluir exemplos de dados reais e estados operacionais diferentes
+\begin{figure}[htbp]
+\centering
+% \includegraphics[width=0.9\textwidth]{figuras/interface_web.png}
+\caption{Interface web adaptativa: modo simples (esquerda) vs modo avançado (direita)}
+\label{fig:interface_web}
+\end{figure}
+
+\subsection{Comunicação em Tempo Real e Persistência de Dados}
+
+A comunicação via Firebase Realtime Database implementa arquitetura push-based que garante sincronização instantânea entre dispositivo IoT e interfaces de usuário. Esta sincronização bidirecional permite tanto monitoramento remoto quanto controle em tempo real.
+
+\textbf{Estrutura de dados hierárquica}:
+\begin{itemize}
+\item \texttt{/devices/\{deviceId\}/snapshot}: Estado atual (umidade, status bomba, timestamp)
+\item \texttt{/devices/\{deviceId\}/config}: Configuração ativa (limiares, calibração, parâmetros)
+\item \texttt{/devices/\{deviceId\}/telemetry}: Histórico temporal para análise de tendências
+\item \texttt{/devices/\{deviceId\}/commands}: Comandos remotos (irrigação manual, reconfiguração)
+\item \texttt{/devices/\{deviceId\}/events}: Log de eventos para auditoria e debugging
+\end{itemize}
+
+\textbf{Funcionalidades de histórico e análise}: Gráficos interativos mostram variações de umidade, frequência de irrigação e correlações com condições ambientais ao longo do tempo. Usuários podem identificar padrões, otimizar configurações e detectar problemas precocemente através de análise visual intuitiva.
+
+\section{Adaptação para Diferentes Tamanhos de Vasos}
+
+Uma das principais inovações do sistema é sua capacidade de adaptação automática para vasos de diferentes volumes, reconhecendo que esta variação é ubíqua em ambientes domésticos e afeta fundamentalmente as características de distribuição de umidade e resposta à irrigação.
+
+\subsection{Metodologia de Calibração Específica}
+
+\textbf{Vasos pequenos (<= 2L)}: Configurações otimizadas para resposta rápida e distribuição uniforme de umidade. Algoritmos implementam ciclos de irrigação mais curtos e frequentes, considerando menor inércia térmica e maior susceptibilidade a variações ambientais.
+
+\textbf{Vasos médios (2-5L)}: Parâmetros intermediários que equilibram responsividade com estabilidade. Ciclos de irrigação de duração moderada com intervalos apropriados para permitir distribuição adequada sem saturação excessiva.
+
+\textbf{Vasos grandes (> 5L)}: Reconhecimento de distribuição heterogênea de umidade e resposta mais lenta. Algoritmos ajustados para ciclos mais longos com intervalos estendidos, garantindo penetração adequada da água em todo o volume de substrato.
+
+\section{Características de Segurança e Confiabilidade}
+
+O sistema incorpora múltiplas camadas de proteção para garantir operação segura e confiável, reconhecendo que falhas em sistemas de automação residencial podem ter consequências significativas tanto para as plantas quanto para o ambiente doméstico.
+
+As proteções de hardware incluem isolamento galvânico através do módulo relé, limitação de corrente através de resistores apropriados e utilização de componentes com especificações adequadas para operação contínua. O circuito de acionamento da bomba implementa lógica fail-safe que desliga automaticamente a bomba em caso de falha do microcontrolador.
+
+As proteções de software implementam múltiplos níveis de verificação e validação, incluindo detecção de valores anômalos de sensores, implementação de timeouts para todas as operações críticas e capacidade de operação em modo degradado quando componentes individuais falham.
+
+O sistema mantém logs detalhados de todas as operações, facilitando diagnóstico de problemas e análise de desempenho ao longo do tempo. Estes logs são armazenados tanto localmente quanto na nuvem, garantindo disponibilidade mesmo em caso de falhas de hardware.
+
+A capacidade de operação offline garante que as plantas continuem recebendo cuidados adequados mesmo durante interrupções de conectividade de internet. O sistema mantém buffers locais de configuração e pode operar autonomamente por períodos prolongados usando os últimos parâmetros conhecidos.
